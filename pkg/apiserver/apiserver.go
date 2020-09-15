@@ -1,6 +1,8 @@
 package apiserver
 
 import (
+	"encoding/json"
+	"github.com/Alex27Khalupka/PBZ_Lab_2_Enterprise/pkg/service"
 	"github.com/Alex27Khalupka/PBZ_Lab_2_Enterprise/pkg/store"
 	"github.com/gorilla/mux"
 	"log"
@@ -18,10 +20,6 @@ func New(config *Config) *APIServer{
 		config: config,
 		router: mux.NewRouter(),
 	}
-}
-
-func (s *APIServer) configureRouter(){
-
 }
 
 func (s *APIServer) configureStore() error{
@@ -46,3 +44,31 @@ func (s *APIServer) Start() error{
 
 	return http.ListenAndServe(s.config.BindAddr, s.router)
 }
+
+func (s *APIServer) configureRouter(){
+	s.router.HandleFunc("/divisions", s.handleGetDivisions).Methods(http.MethodGet)
+}
+
+func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	divisions := service.GetDivisions(s.Store.GetDB())
+
+	jsonResponse, err := json.Marshal(divisions)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+
+
+
