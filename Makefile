@@ -1,5 +1,7 @@
 .PHONY: build
 build:
 	go build -v ./cmd/apiserver
-.PHONY: export_variables
+.PHONE: test
+test:
+	go test ./pkg/service
 .DEFAULT_GOAL := build
