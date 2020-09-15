@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"encoding/json"
+	"github.com/Alex27Khalupka/PBZ_Lab_2_Enterprise/pkg/model"
 	"github.com/Alex27Khalupka/PBZ_Lab_2_Enterprise/pkg/service"
 	"github.com/Alex27Khalupka/PBZ_Lab_2_Enterprise/pkg/store"
 	"github.com/gorilla/mux"
@@ -55,7 +56,7 @@ func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	divisions := service.GetDivisions(s.Store.GetDB())
+	divisions := model.DivisionsList{Divisions: service.GetDivisions(s.Store.GetDB())}
 
 	jsonResponse, err := json.Marshal(divisions)
 	if err != nil {

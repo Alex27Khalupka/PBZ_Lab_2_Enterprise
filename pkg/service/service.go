@@ -8,7 +8,7 @@ import (
 
 func GetDivisions(db *sql.DB) []model.Division {
 
-	rows, err := db.Query("SELECT division_number, division_name FROM divisions")
+	rows, err := db.Query("SELECT divisions.division_number, divisions.division_name FROM divisions")
 	if err != nil {
 		log.Fatal(err)
 	}

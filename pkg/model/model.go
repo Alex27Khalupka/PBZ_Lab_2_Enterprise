@@ -17,7 +17,7 @@ type MovementOfInventoryByDivisions struct {
 
 type Division struct {
 	DivisionNumber string    `json:"division_number"`
-	DivisionName   time.Time `json:"division_name"`
+	DivisionName   string	 `json:"division_name"`
 }
 
 type Employee struct {
@@ -30,7 +30,7 @@ type Employee struct {
 	Sex            string `json:"sex"`
 }
 
-type Repairs struct {
+type Repair struct {
 	RepairID        string        `json:"repair_id"`
 	InventoryNumber string        `json:"inventory_number"`
 	ServiceStartDay string        `json:"service_start_day"`
@@ -47,18 +47,43 @@ type Waybill struct {
 	DetailName    string    `json:"detail_name"`
 }
 
-type Documents struct {
+type Document struct {
 	EmployeeNumber string    `json:"employee_number"`
 	MovementDate   time.Time `json:"movement_date"`
 	DivisionNumber string    `json:"division_number"`
 }
 
-type TableList struct {
-	Employees                      []Employee                       `json:"employees"`
-	MovementOfInventoryByDivisions []MovementOfInventoryByDivisions `json:"movement_of_inventory_by_divisions"`
-	Divisions                      []Division                       `json:"divisions"`
-	Inventory                      []Inventory                      `json:"inventory"`
-	Repairs                        []Repairs                        `json:"repairs"`
-	Waybills                       []Waybill                        `json:"waybill"`
-	Documents                      []Documents                      `json:"documents"`
+type DivisionsList struct {
+	Divisions []Division `json:"divisions"`
 }
+
+type EmployeesList struct {
+	ResponseEmployees []Employee `json:"employees"`
+}
+
+type MovementOfInventoryByDivisionsList struct {
+	MovementOfInventoryByDivisions []MovementOfInventoryByDivisions `json:"movement_od_inventory_by_divisions"`
+}
+
+type RepairsList struct {
+	Repairs []Repair `json:"repairs"`
+}
+
+type WaybillsList struct {
+	Waybills []Waybill `json:"waybills"`
+}
+
+type DocumentsList struct {
+	Documents []Document `json:"documents"`
+}
+
+type InventoryList struct {
+	Inventory []Inventory `json:"inventory"`
+}
+
+
+
+
+
+
+
