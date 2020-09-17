@@ -49,6 +49,7 @@ func (s *APIServer) Start() error{
 func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/divisions", s.handleGetDivisions).Methods(http.MethodGet)
 	s.router.HandleFunc("/employees", s.handleGetEmployees).Methods(http.MethodGet)
+	s.router.HandleFunc("/inventory", s.handleGetInventory).Methods(http.MethodGet)
 }
 
 func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
@@ -81,6 +82,26 @@ func (s *APIServer) handleGetEmployees(w http.ResponseWriter, r *http.Request){
 	employees := model.EmployeesList{ResponseEmployees: service.GetEmployees(s.Store.GetDB())}
 
 	jsonResponse, err := json.Marshal(employees)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func (s *APIServer) handleGetInventory(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	inventory := model.InventoryList{Inventory: service.GetInventory(s.Store.GetDB())}
+
+	jsonResponse, err := json.Marshal(inventory)
 	if err != nil {
 		log.Fatal(err)
 		return
