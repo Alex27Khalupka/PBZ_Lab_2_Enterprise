@@ -24,3 +24,21 @@ func GetDivisions(db *sql.DB) []model.Division {
 
 	return divisions
 }
+
+func GetEmployees(db *sql.DB) []model.Employee {
+	rows, err := db.Query("SELECT employees.employee_number, employees.first_name, employees.last_name, employees.second_name, employees.position, employees.age, employees.sex FROM employees")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var employees []model.Employee
+	for rows.Next() {
+		var  employee model.Employee
+		if err := rows.Scan(&employee.EmployeeNumber, &employee.FirstName, &employee.LastName, &employee.SecondName, &employee.Position, &employee.Age, &employee.Sex); err != nil {
+			log.Fatal(err)
+		}
+		employees = append(employees, employee)
+	}
+
+	return employees
+}
