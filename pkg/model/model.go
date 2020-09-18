@@ -49,7 +49,7 @@ type Waybill struct {
 	DetailName    string    `json:"detail_name"`
 }
 
-type Document struct {
+type MovementOfEmployees struct {
 	EmployeeNumber string    `json:"employee_number"`
 	MovementDate   time.Time `json:"movement_date"`
 	DivisionNumber string    `json:"division_number"`
@@ -75,8 +75,8 @@ type WaybillsList struct {
 	Waybills []Waybill `json:"waybills"`
 }
 
-type DocumentsList struct {
-	Documents []Document `json:"documents"`
+type MovementsOfEmployeesList struct {
+	MovementOfEmployees []MovementOfEmployees `json:"documents"`
 }
 
 type InventoryList struct {

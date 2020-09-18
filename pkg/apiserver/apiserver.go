@@ -52,7 +52,7 @@ func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/inventory", s.handleGetInventory).Methods(http.MethodGet)
 	s.router.HandleFunc("/repairs", s.handleGetRepairs).Methods(http.MethodGet)
 	s.router.HandleFunc("/waybills", s.handleGetWaybills).Methods(http.MethodGet)
-	s.router.HandleFunc("/documents", s.handleGetDocuments).Methods(http.MethodGet)
+	s.router.HandleFunc("/movement_of_employees", s.handleGetMovementOfEmployees).Methods(http.MethodGet)
 	s.router.HandleFunc("/movement_of_inventory", s.handleGetMovementOfInventory).Methods(http.MethodGet)
 }
 
@@ -157,13 +157,13 @@ func (s *APIServer) handleGetWaybills(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func (s *APIServer) handleGetDocuments(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handleGetMovementOfEmployees(w http.ResponseWriter, r *http.Request){
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	documents := model.DocumentsList{Documents: service.GetDocuments(s.Store.GetDB())}
+	documents := model.MovementsOfEmployeesList{MovementOfEmployees: service.GetMovementOfEmployees(s.Store.GetDB())}
 
 	jsonResponse, err := json.Marshal(documents)
 	if err != nil {

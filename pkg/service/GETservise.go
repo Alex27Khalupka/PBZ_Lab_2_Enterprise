@@ -106,23 +106,24 @@ func GetWaybills(db *sql.DB) []model.Waybill {
 	return waybillsList
 }
 
-func GetDocuments(db *sql.DB) []model.Document {
-	rows, err := db.Query("SELECT documents.employee_number, documents.movement_date, documents.division_number " +
-		"FROM documents")
+func GetMovementOfEmployees(db *sql.DB) []model.MovementOfEmployees {
+	rows, err := db.Query("SELECT movement_of_employees.employee_number, movement_of_employees.movement_date, " +
+		"movement_of_employees.division_number FROM movement_of_employees")
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var documentsList []model.Document
+	var movementOfEmployeesList []model.MovementOfEmployees
 	for rows.Next() {
-		var document model.Document
-		if err := rows.Scan(&document.EmployeeNumber, &document.MovementDate, &document.DivisionNumber); err != nil {
+		var movementOfEmployees model.MovementOfEmployees
+		if err := rows.Scan(&movementOfEmployees.EmployeeNumber, &movementOfEmployees.MovementDate,
+			&movementOfEmployees.DivisionNumber); err != nil {
 			log.Fatal(err)
 		}
-		documentsList = append(documentsList, document)
+		movementOfEmployeesList = append(movementOfEmployeesList, movementOfEmployees)
 	}
-	return documentsList
+	return movementOfEmployeesList
 }
 
 func GetMovementOfInventory(db *sql.DB) []model.MovementOfInventory {

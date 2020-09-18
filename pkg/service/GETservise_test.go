@@ -237,7 +237,7 @@ func TestService_GetWaybills(t *testing.T){
 
 }
 
-func TestService_GetDocuments(t *testing.T){
+func TestService_GetMovementOfEmployees(t *testing.T){
 	db, mock, err := sqlmock.New()
 
 	if err != nil {
@@ -259,12 +259,12 @@ func TestService_GetDocuments(t *testing.T){
 		AddRow( "E77", date1, "D2").
 		AddRow( "E16", date2, "D1")
 
-	mock.ExpectQuery("^SELECT (.+) FROM documents").WillReturnRows(rows)
+	mock.ExpectQuery("^SELECT (.+) FROM movement_of_employees").WillReturnRows(rows)
 
-	documents := GetDocuments(db)
+	movementOfEmployees := GetMovementOfEmployees(db)
 
 
-	expectedDocuments := []model.Document{
+	expectedMovementOfEmployees := []model.MovementOfEmployees{
 		{
 			EmployeeNumber: "E77",
 			MovementDate: date1,
@@ -277,7 +277,7 @@ func TestService_GetDocuments(t *testing.T){
 		},
 	}
 
-	assert.Equal(t, expectedDocuments, documents)
+	assert.Equal(t, expectedMovementOfEmployees, movementOfEmployees)
 }
 
 func TestService_GetMovementOfInventory(t *testing.T){
