@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type Inventory struct {
 	InventoryNumber string    `json:"inventory_number"`
@@ -9,15 +11,15 @@ type Inventory struct {
 	YearOfIssue     time.Time `json:"year_of_issue"`
 }
 
-type MovementOfInventoryByDivisions struct {
+type MovementOfInventory struct {
 	InventoryNumber string    `json:"inventory"`
 	MovementDate    time.Time `json:"movement_date"`
 	DivisionNumber  string    `json:"division_number"`
 }
 
 type Division struct {
-	DivisionNumber string    `json:"division_number"`
-	DivisionName   string	 `json:"division_name"`
+	DivisionNumber string `json:"division_number"`
+	DivisionName   string `json:"division_name"`
 }
 
 type Employee struct {
@@ -31,13 +33,13 @@ type Employee struct {
 }
 
 type Repair struct {
-	RepairID        string        `json:"repair_id"`
-	InventoryNumber string        `json:"inventory_number"`
-	ServiceStartDay string        `json:"service_start_day"`
-	RepairType      string        `json:"repair_type"`
-	RepairTime      time.Duration `json:"repair_time"`
-	EmployeeNumber  string        `json:"employee_number"`
-	WaybillNumber   string        `json:"waybill_number"`
+	RepairID        string    `json:"repair_id"`
+	InventoryNumber string    `json:"inventory_number"`
+	ServiceStartDay time.Time `json:"service_start_day"`
+	RepairType      string    `json:"repair_type"`
+	RepairTime      int64     `json:"repair_time"`
+	EmployeeNumber  string    `json:"employee_number"`
+	WaybillNumber   string    `json:"waybill_number"`
 }
 
 type Waybill struct {
@@ -47,7 +49,7 @@ type Waybill struct {
 	DetailName    string    `json:"detail_name"`
 }
 
-type Document struct {
+type MovementOfEmployees struct {
 	EmployeeNumber string    `json:"employee_number"`
 	MovementDate   time.Time `json:"movement_date"`
 	DivisionNumber string    `json:"division_number"`
@@ -61,8 +63,8 @@ type EmployeesList struct {
 	ResponseEmployees []Employee `json:"employees"`
 }
 
-type MovementOfInventoryByDivisionsList struct {
-	MovementOfInventoryByDivisions []MovementOfInventoryByDivisions `json:"movement_od_inventory_by_divisions"`
+type MovementOfInventoryList struct {
+	MovementOfInventory []MovementOfInventory `json:"movement_od_inventory"`
 }
 
 type RepairsList struct {
@@ -73,17 +75,10 @@ type WaybillsList struct {
 	Waybills []Waybill `json:"waybills"`
 }
 
-type DocumentsList struct {
-	Documents []Document `json:"documents"`
+type MovementsOfEmployeesList struct {
+	MovementOfEmployees []MovementOfEmployees `json:"documents"`
 }
 
 type InventoryList struct {
 	Inventory []Inventory `json:"inventory"`
 }
-
-
-
-
-
-
-

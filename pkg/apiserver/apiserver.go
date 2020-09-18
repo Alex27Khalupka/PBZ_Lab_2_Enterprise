@@ -50,6 +50,10 @@ func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/divisions", s.handleGetDivisions).Methods(http.MethodGet)
 	s.router.HandleFunc("/employees", s.handleGetEmployees).Methods(http.MethodGet)
 	s.router.HandleFunc("/inventory", s.handleGetInventory).Methods(http.MethodGet)
+	s.router.HandleFunc("/repairs", s.handleGetRepairs).Methods(http.MethodGet)
+	s.router.HandleFunc("/waybills", s.handleGetWaybills).Methods(http.MethodGet)
+	s.router.HandleFunc("/movement_of_employees", s.handleGetMovementOfEmployees).Methods(http.MethodGet)
+	s.router.HandleFunc("/movement_of_inventory", s.handleGetMovementOfInventory).Methods(http.MethodGet)
 }
 
 func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
@@ -102,6 +106,86 @@ func (s *APIServer) handleGetInventory(w http.ResponseWriter, r *http.Request){
 	inventory := model.InventoryList{Inventory: service.GetInventory(s.Store.GetDB())}
 
 	jsonResponse, err := json.Marshal(inventory)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func (s *APIServer) handleGetRepairs(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	repairs := model.RepairsList{Repairs: service.GetRepairs(s.Store.GetDB())}
+
+	jsonResponse, err := json.Marshal(repairs)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func (s *APIServer) handleGetWaybills(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	waybills := model.WaybillsList{Waybills: service.GetWaybills(s.Store.GetDB())}
+
+	jsonResponse, err := json.Marshal(waybills)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func (s *APIServer) handleGetMovementOfEmployees(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	documents := model.MovementsOfEmployeesList{MovementOfEmployees: service.GetMovementOfEmployees(s.Store.GetDB())}
+
+	jsonResponse, err := json.Marshal(documents)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func (s *APIServer) handleGetMovementOfInventory(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	movementOfInventory := model.MovementOfInventoryList{MovementOfInventory: service.GetMovementOfInventory(s.Store.GetDB())}
+
+	jsonResponse, err := json.Marshal(movementOfInventory)
 	if err != nil {
 		log.Fatal(err)
 		return

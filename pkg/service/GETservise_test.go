@@ -136,5 +136,190 @@ func TestService_GetInventory(t *testing.T){
 	}
 
 	assert.Equal(t, expectedInventory, inventory)
+}
+
+func TestService_GetRepairs(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	date1, err := time.Parse(shortForm, "2020-09-19")
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	date2, err := time.Parse(shortForm, "2020-09-18")
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	rows := sqlmock.NewRows([]string{"repair_id", "inventory_number", "service_start_day", "repair_type", "repair_time",
+		"employee_number", "waybill_number"}).
+		AddRow( "R1", "I1", date1, "minor fix", 1, "E44", "W1").
+		AddRow( "R2", "I2", date2, "major fix", 2, "E77", "W2" )
+
+	mock.ExpectQuery("^SELECT (.+) FROM repairs").WillReturnRows(rows)
+
+	repairs := GetRepairs(db)
+
+
+	expectedRepairs := []model.Repair{
+		{
+			RepairID: "R1",
+			InventoryNumber: "I1",
+			ServiceStartDay: date1,
+			RepairType: "minor fix",
+			RepairTime: 1,
+			EmployeeNumber: "E44",
+			WaybillNumber: "W1",
+		},
+		{
+			RepairID: "R2",
+			InventoryNumber: "I2",
+			ServiceStartDay: date2,
+			RepairType: "major fix",
+			RepairTime: 2,
+			EmployeeNumber: "E77",
+			WaybillNumber: "W2",
+		},
+	}
+
+	assert.Equal(t, expectedRepairs, repairs)
+
+}
+
+func TestService_GetWaybills(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	date1, err := time.Parse(shortForm, "2020-09-19")
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	date2, err := time.Parse(shortForm, "2020-09-18")
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	rows := sqlmock.NewRows([]string{"waybill_number", "receiving_date", "price", "detail_name"}).
+		AddRow( "W1", date1, 100, "detail 1").
+		AddRow( "W2", date2, 200, "detail 2")
+
+	mock.ExpectQuery("^SELECT (.+) FROM waybills").WillReturnRows(rows)
+
+	waybills := GetWaybills(db)
+
+
+	expectedWaybills := []model.Waybill{
+		{
+			WaybillNumber: "W1",
+			ReceivingDate: date1,
+			Price: 100,
+			DetailName: "detail 1",
+		},
+		{
+			WaybillNumber: "W2",
+			ReceivingDate: date2,
+			Price: 200,
+			DetailName: "detail 2",
+		},
+	}
+
+	assert.Equal(t, expectedWaybills, waybills)
+
+}
+
+func TestService_GetMovementOfEmployees(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	date1, err := time.Parse(shortForm, "2020-09-19")
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	date2, err := time.Parse(shortForm, "2020-09-18")
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	rows := sqlmock.NewRows([]string{"employee_number", "movement_date", "division_number"}).
+		AddRow( "E77", date1, "D2").
+		AddRow( "E16", date2, "D1")
+
+	mock.ExpectQuery("^SELECT (.+) FROM movement_of_employees").WillReturnRows(rows)
+
+	movementOfEmployees := GetMovementOfEmployees(db)
+
+
+	expectedMovementOfEmployees := []model.MovementOfEmployees{
+		{
+			EmployeeNumber: "E77",
+			MovementDate: date1,
+			DivisionNumber: "D2",
+		},
+		{
+			EmployeeNumber: "E16",
+			MovementDate: date2,
+			DivisionNumber: "D1",
+		},
+	}
+
+	assert.Equal(t, expectedMovementOfEmployees, movementOfEmployees)
+}
+
+func TestService_GetMovementOfInventory(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	date1, err := time.Parse(shortForm, "2020-09-19")
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	date2, err := time.Parse(shortForm, "2020-09-18")
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	rows := sqlmock.NewRows([]string{"inventory_number", "movement_date", "division_number"}).
+		AddRow( "I1", date1, "D1").
+		AddRow( "I2", date2, "D2")
+
+	mock.ExpectQuery("^SELECT (.+) FROM movement_of_inventory").WillReturnRows(rows)
+
+	movementOfInventory := GetMovementOfInventory(db)
+
+
+	expectedMovementOfInventory := []model.MovementOfInventory{
+		{
+			InventoryNumber: "I1",
+			MovementDate: date1,
+			DivisionNumber: "D1",
+		},
+		{
+			InventoryNumber: "I2",
+			MovementDate: date2,
+			DivisionNumber: "D2",
+		},
+	}
+
+	assert.Equal(t, expectedMovementOfInventory, movementOfInventory)
 
 }
