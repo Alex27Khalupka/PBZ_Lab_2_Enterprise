@@ -52,6 +52,8 @@ func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/inventory", s.handleGetInventory).Methods(http.MethodGet)
 	s.router.HandleFunc("/repairs", s.handleGetRepairs).Methods(http.MethodGet)
 	s.router.HandleFunc("/waybills", s.handleGetWaybills).Methods(http.MethodGet)
+	s.router.HandleFunc("/documents", s.handleGetDocuments).Methods(http.MethodGet)
+	s.router.HandleFunc("/movement_of_inventory", s.handleGetMovementOfInventory).Methods(http.MethodGet)
 }
 
 func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
@@ -144,6 +146,46 @@ func (s *APIServer) handleGetWaybills(w http.ResponseWriter, r *http.Request){
 	waybills := model.WaybillsList{Waybills: service.GetWaybills(s.Store.GetDB())}
 
 	jsonResponse, err := json.Marshal(waybills)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func (s *APIServer) handleGetDocuments(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	documents := model.DocumentsList{Documents: service.GetDocuments(s.Store.GetDB())}
+
+	jsonResponse, err := json.Marshal(documents)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func (s *APIServer) handleGetMovementOfInventory(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	movementOfInventory := model.MovementOfInventoryList{MovementOfInventory: service.GetMovementOfInventory(s.Store.GetDB())}
+
+	jsonResponse, err := json.Marshal(movementOfInventory)
 	if err != nil {
 		log.Fatal(err)
 		return

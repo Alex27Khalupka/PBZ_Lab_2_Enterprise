@@ -11,7 +11,7 @@ type Inventory struct {
 	YearOfIssue     time.Time `json:"year_of_issue"`
 }
 
-type MovementOfInventoryByDivisions struct {
+type MovementOfInventory struct {
 	InventoryNumber string    `json:"inventory"`
 	MovementDate    time.Time `json:"movement_date"`
 	DivisionNumber  string    `json:"division_number"`
@@ -63,8 +63,8 @@ type EmployeesList struct {
 	ResponseEmployees []Employee `json:"employees"`
 }
 
-type MovementOfInventoryByDivisionsList struct {
-	MovementOfInventoryByDivisions []MovementOfInventoryByDivisions `json:"movement_od_inventory_by_divisions"`
+type MovementOfInventoryList struct {
+	MovementOfInventory []MovementOfInventory `json:"movement_od_inventory"`
 }
 
 type RepairsList struct {

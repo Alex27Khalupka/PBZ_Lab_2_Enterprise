@@ -236,3 +236,90 @@ func TestService_GetWaybills(t *testing.T){
 	assert.Equal(t, expectedWaybills, waybills)
 
 }
+
+func TestService_GetDocuments(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	date1, err := time.Parse(shortForm, "2020-09-19")
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	date2, err := time.Parse(shortForm, "2020-09-18")
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	rows := sqlmock.NewRows([]string{"employee_number", "movement_date", "division_number"}).
+		AddRow( "E77", date1, "D2").
+		AddRow( "E16", date2, "D1")
+
+	mock.ExpectQuery("^SELECT (.+) FROM documents").WillReturnRows(rows)
+
+	documents := GetDocuments(db)
+
+
+	expectedDocuments := []model.Document{
+		{
+			EmployeeNumber: "E77",
+			MovementDate: date1,
+			DivisionNumber: "D2",
+		},
+		{
+			EmployeeNumber: "E16",
+			MovementDate: date2,
+			DivisionNumber: "D1",
+		},
+	}
+
+	assert.Equal(t, expectedDocuments, documents)
+}
+
+func TestService_GetMovementOfInventory(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	date1, err := time.Parse(shortForm, "2020-09-19")
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	date2, err := time.Parse(shortForm, "2020-09-18")
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	rows := sqlmock.NewRows([]string{"inventory_number", "movement_date", "division_number"}).
+		AddRow( "I1", date1, "D1").
+		AddRow( "I2", date2, "D2")
+
+	mock.ExpectQuery("^SELECT (.+) FROM movement_of_inventory").WillReturnRows(rows)
+
+	movementOfInventory := GetMovementOfInventory(db)
+
+
+	expectedMovementOfInventory := []model.MovementOfInventory{
+		{
+			InventoryNumber: "I1",
+			MovementDate: date1,
+			DivisionNumber: "D1",
+		},
+		{
+			InventoryNumber: "I2",
+			MovementDate: date2,
+			DivisionNumber: "D2",
+		},
+	}
+
+	assert.Equal(t, expectedMovementOfInventory, movementOfInventory)
+
+}

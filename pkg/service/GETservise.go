@@ -15,7 +15,7 @@ func GetDivisions(db *sql.DB) []model.Division {
 
 	var divisions []model.Division
 	for rows.Next() {
-		var  division model.Division
+		var division model.Division
 		if err := rows.Scan(&division.DivisionNumber, &division.DivisionName); err != nil {
 			log.Fatal(err)
 		}
@@ -26,16 +26,17 @@ func GetDivisions(db *sql.DB) []model.Division {
 }
 
 func GetEmployees(db *sql.DB) []model.Employee {
-	rows, err := db.Query("SELECT employees.employee_number, employees.first_name, employees.last_name, employees.second_name, " +
-		"employees.position, employees.age, employees.sex FROM employees")
+	rows, err := db.Query("SELECT employees.employee_number, employees.first_name, employees.last_name, " +
+		"employees.second_name, employees.position, employees.age, employees.sex FROM employees")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	var employees []model.Employee
 	for rows.Next() {
-		var  employee model.Employee
-		if err := rows.Scan(&employee.EmployeeNumber, &employee.FirstName, &employee.LastName, &employee.SecondName, &employee.Position, &employee.Age, &employee.Sex); err != nil {
+		var employee model.Employee
+		if err := rows.Scan(&employee.EmployeeNumber, &employee.FirstName, &employee.LastName, &employee.SecondName,
+			&employee.Position, &employee.Age, &employee.Sex); err != nil {
 			log.Fatal(err)
 		}
 		employees = append(employees, employee)
@@ -45,7 +46,8 @@ func GetEmployees(db *sql.DB) []model.Employee {
 }
 
 func GetInventory(db *sql.DB) []model.Inventory {
-	rows, err := db.Query("SELECT inventory.inventory_number, inventory_name, inventory.inventory_model, inventory.year_of_issue FROM inventory")
+	rows, err := db.Query("SELECT inventory.inventory_number, inventory_name, inventory.inventory_model, " +
+		"inventory.year_of_issue FROM inventory")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,7 +55,8 @@ func GetInventory(db *sql.DB) []model.Inventory {
 	var inventoryList []model.Inventory
 	for rows.Next() {
 		var inventory model.Inventory
-		if err := rows.Scan(&inventory.InventoryNumber, &inventory.InventoryName, &inventory.InventoryModel, &inventory.YearOfIssue); err != nil {
+		if err := rows.Scan(&inventory.InventoryNumber, &inventory.InventoryName, &inventory.InventoryModel,
+			&inventory.YearOfIssue); err != nil {
 			log.Fatal(err)
 		}
 		inventoryList = append(inventoryList, inventory)
@@ -94,10 +97,50 @@ func GetWaybills(db *sql.DB) []model.Waybill {
 	var waybillsList []model.Waybill
 	for rows.Next() {
 		var waybill model.Waybill
-		if err := rows.Scan(&waybill.WaybillNumber, &waybill.ReceivingDate, &waybill.Price, &waybill.DetailName); err != nil {
+		if err := rows.Scan(&waybill.WaybillNumber, &waybill.ReceivingDate, &waybill.Price,
+			&waybill.DetailName); err != nil {
 			log.Fatal(err)
 		}
 		waybillsList = append(waybillsList, waybill)
 	}
 	return waybillsList
+}
+
+func GetDocuments(db *sql.DB) []model.Document {
+	rows, err := db.Query("SELECT documents.employee_number, documents.movement_date, documents.division_number " +
+		"FROM documents")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var documentsList []model.Document
+	for rows.Next() {
+		var document model.Document
+		if err := rows.Scan(&document.EmployeeNumber, &document.MovementDate, &document.DivisionNumber); err != nil {
+			log.Fatal(err)
+		}
+		documentsList = append(documentsList, document)
+	}
+	return documentsList
+}
+
+func GetMovementOfInventory(db *sql.DB) []model.MovementOfInventory {
+	rows, err := db.Query("SELECT movement_of_inventory.inventory_number, movement_of_inventory.movement_date, " +
+		"movement_of_inventory.division_number FROM movement_of_inventory")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var movementOfInventoryList []model.MovementOfInventory
+	for rows.Next() {
+		var movementOfInventory model.MovementOfInventory
+		if err := rows.Scan(&movementOfInventory.InventoryNumber, &movementOfInventory.MovementDate,
+			&movementOfInventory.DivisionNumber); err != nil {
+			log.Fatal(err)
+		}
+		movementOfInventoryList = append(movementOfInventoryList, movementOfInventory)
+	}
+	return movementOfInventoryList
 }
