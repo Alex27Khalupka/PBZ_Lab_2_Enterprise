@@ -50,6 +50,7 @@ func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/divisions", s.handleGetDivisions).Methods(http.MethodGet)
 	s.router.HandleFunc("/employees", s.handleGetEmployees).Methods(http.MethodGet)
 	s.router.HandleFunc("/inventory", s.handleGetInventory).Methods(http.MethodGet)
+	s.router.HandleFunc("/repairs", s.handleGetRepairs).Methods(http.MethodGet)
 }
 
 func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
@@ -112,3 +113,24 @@ func (s *APIServer) handleGetInventory(w http.ResponseWriter, r *http.Request){
 		return
 	}
 }
+
+func (s *APIServer) handleGetRepairs(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	repairs := model.RepairsList{Repairs: service.GetRepairs(s.Store.GetDB())}
+
+	jsonResponse, err := json.Marshal(repairs)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+

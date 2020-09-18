@@ -136,5 +136,57 @@ func TestService_GetInventory(t *testing.T){
 	}
 
 	assert.Equal(t, expectedInventory, inventory)
+}
+
+func TestService_GetRepairs(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	date1, err := time.Parse(shortForm, "2020-09-19")
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	date2, err := time.Parse(shortForm, "2020-09-18")
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	rows := sqlmock.NewRows([]string{"repair_id", "inventory_number", "service_start_day", "repair_type", "repair_time",
+		"employee_number", "waybill_number"}).
+		AddRow( "R1", "I1", date1, "minor fix", 1, "E44", "W1").
+		AddRow( "R2", "I2", date2, "major fix", 2, "E77", "W2" )
+
+	mock.ExpectQuery("^SELECT (.+) FROM repairs").WillReturnRows(rows)
+
+	repairs := GetRepairs(db)
+
+
+	expectedRepairs := []model.Repair{
+		{
+			RepairID: "R1",
+			InventoryNumber: "I1",
+			ServiceStartDay: date1,
+			RepairType: "minor fix",
+			RepairTime: 1,
+			EmployeeNumber: "E44",
+			WaybillNumber: "W1",
+		},
+		{
+			RepairID: "R2",
+			InventoryNumber: "I2",
+			ServiceStartDay: date2,
+			RepairType: "major fix",
+			RepairTime: 2,
+			EmployeeNumber: "E77",
+			WaybillNumber: "W2",
+		},
+	}
+
+	assert.Equal(t, expectedRepairs, repairs)
 
 }

@@ -26,7 +26,8 @@ func GetDivisions(db *sql.DB) []model.Division {
 }
 
 func GetEmployees(db *sql.DB) []model.Employee {
-	rows, err := db.Query("SELECT employees.employee_number, employees.first_name, employees.last_name, employees.second_name, employees.position, employees.age, employees.sex FROM employees")
+	rows, err := db.Query("SELECT employees.employee_number, employees.first_name, employees.last_name, employees.second_name, " +
+		"employees.position, employees.age, employees.sex FROM employees")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,7 +45,7 @@ func GetEmployees(db *sql.DB) []model.Employee {
 }
 
 func GetInventory(db *sql.DB) []model.Inventory {
-	rows, err := db.Query("SELECT inventory.inventory_number, inventory.inventory_name, inventory.inventory_model, inventory.year_of_issue FROM inventory")
+	rows, err := db.Query("SELECT inventory.inventory_number, inventory_name, inventory.inventory_model, inventory.year_of_issue FROM inventory")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -59,4 +60,25 @@ func GetInventory(db *sql.DB) []model.Inventory {
 	}
 
 	return inventoryList
+}
+
+func GetRepairs(db *sql.DB) []model.Repair {
+	rows, err := db.Query("SELECT repairs.repair_id, repairs.inventory_number, repairs.service_start_date, " +
+		"repairs.repair_type, repairs.days_to_repair, repairs.employee_number, repairs.waybill_number FROM repairs")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var repairsList []model.Repair
+	for rows.Next() {
+		var repair model.Repair
+		if err := rows.Scan(&repair.RepairID, &repair.InventoryNumber, &repair.ServiceStartDay, &repair.RepairType,
+			&repair.RepairTime, &repair.EmployeeNumber, &repair.WaybillNumber); err != nil {
+			log.Fatal(err)
+		}
+		repairsList = append(repairsList, repair)
+	}
+
+	return repairsList
 }
