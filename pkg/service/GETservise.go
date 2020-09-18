@@ -82,3 +82,22 @@ func GetRepairs(db *sql.DB) []model.Repair {
 
 	return repairsList
 }
+
+func GetWaybills(db *sql.DB) []model.Waybill {
+	rows, err := db.Query("SELECT waybills.waybill_number, waybills.receiving_date, waybills.price, " +
+		"waybills.detail_name FROM waybills")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var waybillsList []model.Waybill
+	for rows.Next() {
+		var waybill model.Waybill
+		if err := rows.Scan(&waybill.WaybillNumber, &waybill.ReceivingDate, &waybill.Price, &waybill.DetailName); err != nil {
+			log.Fatal(err)
+		}
+		waybillsList = append(waybillsList, waybill)
+	}
+	return waybillsList
+}

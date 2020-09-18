@@ -51,6 +51,7 @@ func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/employees", s.handleGetEmployees).Methods(http.MethodGet)
 	s.router.HandleFunc("/inventory", s.handleGetInventory).Methods(http.MethodGet)
 	s.router.HandleFunc("/repairs", s.handleGetRepairs).Methods(http.MethodGet)
+	s.router.HandleFunc("/waybills", s.handleGetWaybills).Methods(http.MethodGet)
 }
 
 func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
@@ -134,3 +135,22 @@ func (s *APIServer) handleGetRepairs(w http.ResponseWriter, r *http.Request){
 	}
 }
 
+func (s *APIServer) handleGetWaybills(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	waybills := model.WaybillsList{Waybills: service.GetWaybills(s.Store.GetDB())}
+
+	jsonResponse, err := json.Marshal(waybills)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}

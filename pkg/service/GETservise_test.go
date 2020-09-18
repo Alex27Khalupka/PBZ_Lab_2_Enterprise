@@ -190,3 +190,49 @@ func TestService_GetRepairs(t *testing.T){
 	assert.Equal(t, expectedRepairs, repairs)
 
 }
+
+func TestService_GetWaybills(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	date1, err := time.Parse(shortForm, "2020-09-19")
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	date2, err := time.Parse(shortForm, "2020-09-18")
+	if err!=nil {
+		log.Fatal(err)
+	}
+
+	rows := sqlmock.NewRows([]string{"waybill_number", "receiving_date", "price", "detail_name"}).
+		AddRow( "W1", date1, 100, "detail 1").
+		AddRow( "W2", date2, 200, "detail 2")
+
+	mock.ExpectQuery("^SELECT (.+) FROM waybills").WillReturnRows(rows)
+
+	waybills := GetWaybills(db)
+
+
+	expectedWaybills := []model.Waybill{
+		{
+			WaybillNumber: "W1",
+			ReceivingDate: date1,
+			Price: 100,
+			DetailName: "detail 1",
+		},
+		{
+			WaybillNumber: "W2",
+			ReceivingDate: date2,
+			Price: 200,
+			DetailName: "detail 2",
+		},
+	}
+
+	assert.Equal(t, expectedWaybills, waybills)
+
+}
