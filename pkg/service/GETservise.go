@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"github.com/Alex27Khalupka/PBZ_Lab_2_Enterprise/pkg/model"
 	"log"
+	"time"
 )
 
 func GetDivisions(db *sql.DB) []model.Division {
@@ -144,4 +145,25 @@ func GetMovementOfInventory(db *sql.DB) []model.MovementOfInventory {
 		movementOfInventoryList = append(movementOfInventoryList, movementOfInventory)
 	}
 	return movementOfInventoryList
+}
+
+func GetEmployeesByDivision(db *sql.DB, id string) []model.EmployeeByDivision {
+	rows, err := db.Query("SELECT employees.first_name, employees.last_name, employees.second_name, " +
+		"employees.age FROM employees INNER JOIN movement_of_employees ON employees.employee_number = " +
+		"movement_of_employees.employee_number WHERE movement_of_employees.division_number = $1", id)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var employees []model.EmployeeByDivision
+	for rows.Next() {
+		var employee model.EmployeeByDivision
+		var age int64
+		if err := rows.Scan(&employee.FirstName, &employee.LastName, &employee.SecondName, &age); err != nil {
+			log.Fatal(err)
+		}
+		employee.DateOfBirth = int64(time.Now().Year()) - age
+		employees = append(employees, employee)
+	}
+	return employees
 }

@@ -54,9 +54,11 @@ func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/waybills", s.handleGetWaybills).Methods(http.MethodGet)
 	s.router.HandleFunc("/movement_of_employees", s.handleGetMovementOfEmployees).Methods(http.MethodGet)
 	s.router.HandleFunc("/movement_of_inventory", s.handleGetMovementOfInventory).Methods(http.MethodGet)
+	s.router.HandleFunc("/employees/by_division/{id}", s.handleGetEmployeesByDivision).Methods(http.MethodGet)
 }
 
 func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
+
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
@@ -195,4 +197,38 @@ func (s *APIServer) handleGetMovementOfInventory(w http.ResponseWriter, r *http.
 		log.Fatal(err)
 		return
 	}
+}
+
+func (s *APIServer) handleGetEmployeesByDivision(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	id := getID(r, "id")
+
+	employees := model.EmployeeByDivisionList{EmployeesByDivisionList: service.GetEmployeesByDivision(s.Store.GetDB(), id)}
+
+	jsonResponse, err := json.Marshal(employees)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+
+
+
+
+
+// func getID returns id of an object from url
+func getID(req *http.Request, idName string) string {
+	vars := mux.Vars(req)
+	id := vars[idName]
+	return id
 }
