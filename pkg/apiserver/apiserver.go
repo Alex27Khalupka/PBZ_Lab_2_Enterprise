@@ -48,13 +48,13 @@ func (s *APIServer) Start() error{
 
 func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/divisions", s.handleGetDivisions).Methods(http.MethodGet)
+	s.router.Path("/employees").Queries("division_id", "{division_id}").HandlerFunc(s.handleGetEmployeesByDivision).Methods(http.MethodGet)
 	s.router.HandleFunc("/employees", s.handleGetEmployees).Methods(http.MethodGet)
 	s.router.HandleFunc("/inventory", s.handleGetInventory).Methods(http.MethodGet)
 	s.router.HandleFunc("/repairs", s.handleGetRepairs).Methods(http.MethodGet)
 	s.router.HandleFunc("/waybills", s.handleGetWaybills).Methods(http.MethodGet)
 	s.router.HandleFunc("/movement_of_employees", s.handleGetMovementOfEmployees).Methods(http.MethodGet)
 	s.router.HandleFunc("/movement_of_inventory", s.handleGetMovementOfInventory).Methods(http.MethodGet)
-	s.router.HandleFunc("/employees/by_division/{id}", s.handleGetEmployeesByDivision).Methods(http.MethodGet)
 }
 
 func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
@@ -85,6 +85,7 @@ func (s *APIServer) handleGetEmployees(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
+	log.Println("asdasdsadsdasdsad")
 	employees := model.EmployeesList{ResponseEmployees: service.GetEmployees(s.Store.GetDB())}
 
 	jsonResponse, err := json.Marshal(employees)
@@ -204,10 +205,21 @@ func (s *APIServer) handleGetEmployeesByDivision(w http.ResponseWriter, r *http.
 		log.Fatal(err)
 		return
 	}
+	paramsList, ok := r.URL.Query()["division_id"]
+	divisionID := paramsList[0]
 
-	id := getID(r, "id")
+	if !ok || len(paramsList) < 1{
+		http.Error(w, "Url Param 'division_id' is missing", http.StatusBadRequest)
+		return
+	}
+	if len(paramsList) > 1{
+		http.Error(w, "To many URL Params", http.StatusBadRequest)
+		return
+	}
 
-	employees := model.EmployeeByDivisionList{EmployeesByDivisionList: service.GetEmployeesByDivision(s.Store.GetDB(), id)}
+	log.Println(divisionID)
+
+	employees := model.EmployeeByDivisionList{EmployeesByDivisionList: service.GetEmployeesByDivision(s.Store.GetDB(), divisionID)}
 
 	jsonResponse, err := json.Marshal(employees)
 	if err != nil {
@@ -220,10 +232,6 @@ func (s *APIServer) handleGetEmployeesByDivision(w http.ResponseWriter, r *http.
 		return
 	}
 }
-
-
-
-
 
 
 // func getID returns id of an object from url
