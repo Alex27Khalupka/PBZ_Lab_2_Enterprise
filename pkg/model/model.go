@@ -83,13 +83,13 @@ type InventoryList struct {
 	Inventory []Inventory `json:"inventory"`
 }
 
-type EmployeeByDivision struct {
+type EmployeeResponse struct {
 	FirstName      string `json:"first_name"`
 	LastName       string `json:"last_name"`
 	SecondName     string `json:"second_name"`
 	DateOfBirth    int64  `json:"date_of_birth"`
 }
 
-type EmployeeByDivisionList struct{
-	EmployeesByDivisionList []EmployeeByDivision `json:"employees_by_division"`
+type EmployeeResponseList struct{
+	EmployeesByDivisionList []EmployeeResponse `json:"employees_by_division"`
 }

@@ -147,7 +147,7 @@ func GetMovementOfInventory(db *sql.DB) []model.MovementOfInventory {
 	return movementOfInventoryList
 }
 
-func GetEmployeesByDivision(db *sql.DB, id string) []model.EmployeeByDivision {
+func GetEmployeesByDivision(db *sql.DB, id string) []model.EmployeeResponse {
 	rows, err := db.Query("SELECT employees.first_name, employees.last_name, employees.second_name, " +
 		"employees.age FROM employees INNER JOIN movement_of_employees ON employees.employee_number = " +
 		"movement_of_employees.employee_number WHERE movement_of_employees.division_number = $1", id)
@@ -155,9 +155,29 @@ func GetEmployeesByDivision(db *sql.DB, id string) []model.EmployeeByDivision {
 		log.Fatal(err)
 	}
 
-	var employees []model.EmployeeByDivision
+	var employees []model.EmployeeResponse
 	for rows.Next() {
-		var employee model.EmployeeByDivision
+		var employee model.EmployeeResponse
+		var age int64
+		if err := rows.Scan(&employee.FirstName, &employee.LastName, &employee.SecondName, &age); err != nil {
+			log.Fatal(err)
+		}
+		employee.DateOfBirth = int64(time.Now().Year()) - age
+		employees = append(employees, employee)
+	}
+	return employees
+}
+
+func GetEmployeesByAgeAndSex(db *sql.DB, age int, sex string) []model.EmployeeResponse {
+	rows, err := db.Query("SELECT employees.first_name, employees.last_name, employees.second_name, " +
+		"employees.age FROM employees WHERE employees.age = $1 AND employees.sex = $2", age, sex)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var employees []model.EmployeeResponse
+	for rows.Next() {
+		var employee model.EmployeeResponse
 		var age int64
 		if err := rows.Scan(&employee.FirstName, &employee.LastName, &employee.SecondName, &age); err != nil {
 			log.Fatal(err)

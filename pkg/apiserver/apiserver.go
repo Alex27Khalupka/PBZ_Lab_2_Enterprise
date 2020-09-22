@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type APIServer struct{
@@ -49,12 +50,14 @@ func (s *APIServer) Start() error{
 func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/divisions", s.handleGetDivisions).Methods(http.MethodGet)
 	s.router.Path("/employees").Queries("division_id", "{division_id}").HandlerFunc(s.handleGetEmployeesByDivision).Methods(http.MethodGet)
+	s.router.Path("/employees").Queries("age", "{age}", "sex", "{sex}").HandlerFunc(s.handleGetEmployeesByAgeAndSex).Methods(http.MethodGet)
 	s.router.HandleFunc("/employees", s.handleGetEmployees).Methods(http.MethodGet)
 	s.router.HandleFunc("/inventory", s.handleGetInventory).Methods(http.MethodGet)
 	s.router.HandleFunc("/repairs", s.handleGetRepairs).Methods(http.MethodGet)
 	s.router.HandleFunc("/waybills", s.handleGetWaybills).Methods(http.MethodGet)
 	s.router.HandleFunc("/movement_of_employees", s.handleGetMovementOfEmployees).Methods(http.MethodGet)
 	s.router.HandleFunc("/movement_of_inventory", s.handleGetMovementOfInventory).Methods(http.MethodGet)
+
 }
 
 func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
@@ -85,7 +88,6 @@ func (s *APIServer) handleGetEmployees(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	log.Println("asdasdsadsdasdsad")
 	employees := model.EmployeesList{ResponseEmployees: service.GetEmployees(s.Store.GetDB())}
 
 	jsonResponse, err := json.Marshal(employees)
@@ -219,7 +221,7 @@ func (s *APIServer) handleGetEmployeesByDivision(w http.ResponseWriter, r *http.
 
 	log.Println(divisionID)
 
-	employees := model.EmployeeByDivisionList{EmployeesByDivisionList: service.GetEmployeesByDivision(s.Store.GetDB(), divisionID)}
+	employees := model.EmployeeResponseList{EmployeesByDivisionList: service.GetEmployeesByDivision(s.Store.GetDB(), divisionID)}
 
 	jsonResponse, err := json.Marshal(employees)
 	if err != nil {
@@ -233,6 +235,56 @@ func (s *APIServer) handleGetEmployeesByDivision(w http.ResponseWriter, r *http.
 	}
 }
 
+func (s *APIServer) handleGetEmployeesByAgeAndSex(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+	paramsList, ok := r.URL.Query()["age"]
+	employeeAgeString := paramsList[0]
+
+	if !ok || len(paramsList) < 1{
+		http.Error(w, "Url Param 'age' is missing for age", http.StatusBadRequest)
+		return
+	}
+	if len(paramsList) > 1{
+		http.Error(w, "To many URL Params", http.StatusBadRequest)
+		return
+	}
+
+	employeeAge, err := strconv.Atoi(employeeAgeString)
+	if err != nil {
+		http.Error(w, "Can't convert URL Param 'age' to  int", http.StatusBadRequest)
+		return
+	}
+
+
+	paramsList, ok = r.URL.Query()["sex"]
+	employeeSex := paramsList[0]
+
+	if !ok || len(paramsList) < 1{
+		http.Error(w, "Url Param 'sex' is missing", http.StatusBadRequest)
+		return
+	}
+
+	if len(paramsList) > 1{
+		http.Error(w, "To many URL Params for sex", http.StatusBadRequest)
+		return
+	}
+
+	employees := model.EmployeeResponseList{EmployeesByDivisionList: service.GetEmployeesByAgeAndSex(s.Store.GetDB(), employeeAge, employeeSex)}
+
+	jsonResponse, err := json.Marshal(employees)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
 
 // func getID returns id of an object from url
 func getID(req *http.Request, idName string) string {

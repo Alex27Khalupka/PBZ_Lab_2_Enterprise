@@ -343,3 +343,22 @@ func TestService_GetEmployeesByDivision(t *testing.T){
 		"employees.employee_number = movement_of_employees.employee_number " +
 		"WHERE movement_of_employees.division_number = (.+)").WillReturnRows(rows)
 }
+
+func TestService_GetEmployeesByAgeAndSex(t *testing.T){
+	defer assert.True(t, true)
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"first_name", "last_name", "second_name", "age"}).
+		AddRow( "Alex", "Employee", "First", 40).
+		AddRow( "Alex", "Employee", "Second", 40).
+		AddRow( "Maggie", "Employee", "Second", 35)
+
+	mock.ExpectQuery("^SELECT (.+) FROM employees WHERE*").
+		WithArgs(40, "Male").
+		WillReturnRows(rows)
+}
