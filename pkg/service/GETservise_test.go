@@ -327,8 +327,6 @@ func TestService_GetMovementOfInventory(t *testing.T){
 func TestService_GetEmployeesByDivision(t *testing.T){
 	db, mock, err := sqlmock.New()
 
-	defer assert.True(t, true)
-
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
@@ -342,10 +340,34 @@ func TestService_GetEmployeesByDivision(t *testing.T){
 	mock.ExpectQuery("^SELECT (.+) FROM employees INNER JOIN movement_of_employees ON " +
 		"employees.employee_number = movement_of_employees.employee_number " +
 		"WHERE movement_of_employees.division_number = (.+)").WillReturnRows(rows)
+
+	expectedEmployees := []model.EmployeeResponse{
+		{
+			FirstName: "Kimi",
+			LastName: "Raikonnen",
+			SecondName: "Matias",
+			DateOfBirth: 1921,
+		},
+		{
+			FirstName: "Alex",
+			LastName: "Khalupka",
+			SecondName: "Andreevich",
+			DateOfBirth: 2001,
+		},
+		{
+			FirstName: "Alex",
+			LastName: "Lapitsky",
+			SecondName: "Evgenevich",
+			DateOfBirth: 2000,
+		},
+	}
+
+	employees := GetEmployeesByDivision(db, "D2")
+
+	assert.Equal(t, expectedEmployees, employees)
 }
 
 func TestService_GetEmployeesByAgeAndSex(t *testing.T){
-	defer assert.True(t, true)
 	db, mock, err := sqlmock.New()
 
 	if err != nil {
@@ -355,10 +377,28 @@ func TestService_GetEmployeesByAgeAndSex(t *testing.T){
 
 	rows := sqlmock.NewRows([]string{"first_name", "last_name", "second_name", "age"}).
 		AddRow( "Alex", "Employee", "First", 40).
-		AddRow( "Alex", "Employee", "Second", 40).
-		AddRow( "Maggie", "Employee", "Second", 35)
+		AddRow( "Alex", "Employee", "Second", 40)
 
 	mock.ExpectQuery("^SELECT (.+) FROM employees WHERE*").
 		WithArgs(40, "Male").
 		WillReturnRows(rows)
+
+	employees := GetEmployeesByAgeAndSex(db, 40, "Male")
+
+	expectedEmployees := []model.EmployeeResponse{
+		{
+			FirstName: "Alex",
+			LastName: "Employee",
+			SecondName: "First",
+			DateOfBirth: 1980,
+		},
+		{
+			FirstName: "Alex",
+			LastName: "Employee",
+			SecondName: "Second",
+			DateOfBirth: 1980,
+		},
+	}
+
+	assert.Equal(t, expectedEmployees, employees)
 }
