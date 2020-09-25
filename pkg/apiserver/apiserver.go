@@ -57,7 +57,7 @@ func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/waybills", s.handleGetWaybills).Methods(http.MethodGet)
 	s.router.HandleFunc("/movement_of_employees", s.handleGetMovementOfEmployees).Methods(http.MethodGet)
 	s.router.HandleFunc("/movement_of_inventory", s.handleGetMovementOfInventory).Methods(http.MethodGet)
-
+	s.router.HandleFunc("/employees/{division_id}", s.handlePostEmployees).Methods(http.MethodPost)
 }
 
 func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
@@ -280,6 +280,43 @@ func (s *APIServer) handleGetEmployeesByAgeAndSex(w http.ResponseWriter, r *http
 		return
 	}
 
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func (s *APIServer) handlePostEmployees(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	divisionID := getID(r, "division_id")
+
+	decoder := json.NewDecoder(r.Body)
+	var employee model.Employee
+	err := decoder.Decode(&employee)
+
+	if err!=nil{
+		http.Error(w, "Wrong request body", http.StatusBadRequest)
+		return
+	}
+
+	err = service.POSTEmployee(s.Store.GetDB(), employee, divisionID)
+	if err!=nil{
+		log.Println(err)
+		http.Error(w, "Employee with this id already exists", http.StatusBadRequest)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(employee)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 	if _, err = w.Write(jsonResponse); err != nil {
 		log.Fatal(err)
 		return
