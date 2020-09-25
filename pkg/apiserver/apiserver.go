@@ -61,6 +61,8 @@ func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/inventory/{division_id}", s.handlePostInventory).Methods(http.MethodPost)
 	s.router.HandleFunc("/inventory/{inventory_id}", s.handlePutInventory).Methods(http.MethodPut)
 	s.router.HandleFunc("/employees/{employee_id}", s.handlePutEmployee).Methods(http.MethodPut)
+	s.router.HandleFunc("/employees/{employee_id}", s.handleDeleteEmployee).Methods(http.MethodDelete)
+	s.router.HandleFunc("/inventory/{inventory_id}", s.handleDeleteInventory).Methods(http.MethodDelete)
 }
 
 func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
@@ -448,6 +450,38 @@ func (s *APIServer) handlePutEmployee(w http.ResponseWriter, r *http.Request){
 		log.Fatal(err)
 		return
 	}
+}
+
+func (s *APIServer) handleDeleteEmployee(w http.ResponseWriter, req *http.Request) {
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+	}
+
+	employeeID := getID(req, "employee_id")
+
+	if err := service.DeleteEmployee(s.Store.GetDB(), employeeID); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+
+}
+
+func (s *APIServer) handleDeleteInventory(w http.ResponseWriter, req *http.Request) {
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+	}
+
+	inventoryID := getID(req, "inventory_id")
+
+	if err := service.DeleteInventory(s.Store.GetDB(), inventoryID); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+
 }
 
 // func getID returns id of an object from url
