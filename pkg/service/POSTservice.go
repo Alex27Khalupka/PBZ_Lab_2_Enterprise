@@ -64,7 +64,9 @@ func POSTInventory(db *sql.DB, inventory model.Inventory, divisionID string) err
 		return err
 	}
 
-	err = POSTMovementOfInventory(db, inventory.InventoryNumber, divisionID)
+	if divisionID != "" {
+		err = POSTMovementOfInventory(db, inventory.InventoryNumber, divisionID)
+	}
 
 	return nil
 }
