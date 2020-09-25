@@ -25,13 +25,6 @@ func POSTEmployee(db *sql.DB, employee model.Employee, divisionID string) error{
 		return err
 	}
 
-	//if _, err := db.Query("INSERT INTO employees (employee_number, first_name, last_name, " +
-	//	"second_name, position, age, sex) VALUES (?, ?, ?, ?, ?, ?, ?)",
-	//	employee.EmployeeNumber, employee.FirstName, employee.LastName, employee.SecondName, employee.Position,
-	//	employee.Age, employee.Sex); err!=nil{
-	//	return err
-	//}
-
 	err = POSTMovementOfEmployees(db, employee.EmployeeNumber, divisionID)
 
 	return nil
@@ -46,6 +39,45 @@ func POSTMovementOfEmployees(db *sql.DB, employeeNumber string, divisionID strin
 	}
 	defer stmt.Close()
 	_, err = stmt.Exec(employeeNumber, time.Now().Format("2020-01-01"), divisionID)
+
+	if err !=nil{
+		return err
+	}
+
+	return nil
+}
+
+func POSTInventory(db *sql.DB, inventory model.Inventory, divisionID string) error{
+
+	query := "INSERT INTO inventory (inventory_number, inventory_name, inventory_model, year_of_issue) " +
+		"VALUES ($1, $2, $3, $4)"
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(inventory.InventoryNumber, inventory.InventoryName, inventory.InventoryModel,
+		inventory.YearOfIssue)
+
+	if err !=nil{
+		return err
+	}
+
+	err = POSTMovementOfInventory(db, inventory.InventoryNumber, divisionID)
+
+	return nil
+}
+
+func POSTMovementOfInventory(db *sql.DB, inventoryNumber string, divisionID string) error{
+	query := "INSERT INTO movement_of_inventory (inventory_number, movement_date, division_number) VALUES" +
+		" ($1, $2, $3)"
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(inventoryNumber, time.Now().Format("2020-01-01"), divisionID)
 
 	if err !=nil{
 		return err

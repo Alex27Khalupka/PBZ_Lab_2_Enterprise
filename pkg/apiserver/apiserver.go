@@ -58,6 +58,7 @@ func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/movement_of_employees", s.handleGetMovementOfEmployees).Methods(http.MethodGet)
 	s.router.HandleFunc("/movement_of_inventory", s.handleGetMovementOfInventory).Methods(http.MethodGet)
 	s.router.HandleFunc("/employees/{division_id}", s.handlePostEmployees).Methods(http.MethodPost)
+	s.router.HandleFunc("/inventory/{division_id}", s.handlePostInventory).Methods(http.MethodPost)
 }
 
 func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
@@ -286,6 +287,49 @@ func (s *APIServer) handleGetEmployeesByAgeAndSex(w http.ResponseWriter, r *http
 	}
 }
 
+func (s *APIServer) handlePostInventory(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	divisionID := getID(r, "division_id")
+
+	decoder := json.NewDecoder(r.Body)
+	var inventory model.Inventory
+	err := decoder.Decode(&inventory)
+	log.Println(inventory)
+
+	if err!=nil{
+		http.Error(w, "Wrong request body", http.StatusBadRequest)
+		return
+	}
+
+	if inventory.InventoryNumber == "" || inventory.InventoryName == "" || inventory.InventoryModel == ""{
+		http.Error(w, "Some fields are empty", http.StatusBadRequest)
+		return
+	}
+
+	err = service.POSTInventory(s.Store.GetDB(), inventory, divisionID)
+	if err!=nil{
+		log.Println(err)
+		http.Error(w, "Inventory with this id already exists", http.StatusBadRequest)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(inventory)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
 func (s *APIServer) handlePostEmployees(w http.ResponseWriter, r *http.Request){
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
@@ -300,6 +344,12 @@ func (s *APIServer) handlePostEmployees(w http.ResponseWriter, r *http.Request){
 
 	if err!=nil{
 		http.Error(w, "Wrong request body", http.StatusBadRequest)
+		return
+	}
+
+	if employee.EmployeeNumber == "" || employee.FirstName == "" || employee.LastName == "" ||
+		employee.SecondName == "" || employee.Position == "" || employee.Age == 0 || employee.Sex == ""{
+		http.Error(w, "Some fields are empty", http.StatusBadRequest)
 		return
 	}
 
