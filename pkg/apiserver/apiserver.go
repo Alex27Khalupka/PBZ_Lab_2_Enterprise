@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type APIServer struct{
@@ -48,15 +49,20 @@ func (s *APIServer) Start() error{
 
 func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/divisions", s.handleGetDivisions).Methods(http.MethodGet)
+	s.router.Path("/employees").Queries("division_id", "{division_id}").HandlerFunc(s.handleGetEmployeesByDivision).Methods(http.MethodGet)
+	s.router.Path("/employees").Queries("age", "{age}", "sex", "{sex}").HandlerFunc(s.handleGetEmployeesByAgeAndSex).Methods(http.MethodGet)
 	s.router.HandleFunc("/employees", s.handleGetEmployees).Methods(http.MethodGet)
 	s.router.HandleFunc("/inventory", s.handleGetInventory).Methods(http.MethodGet)
 	s.router.HandleFunc("/repairs", s.handleGetRepairs).Methods(http.MethodGet)
 	s.router.HandleFunc("/waybills", s.handleGetWaybills).Methods(http.MethodGet)
 	s.router.HandleFunc("/movement_of_employees", s.handleGetMovementOfEmployees).Methods(http.MethodGet)
 	s.router.HandleFunc("/movement_of_inventory", s.handleGetMovementOfInventory).Methods(http.MethodGet)
+	s.router.HandleFunc("/employees/{division_id}", s.handlePostEmployees).Methods(http.MethodPost)
+	s.router.HandleFunc("/inventory/{division_id}", s.handlePostInventory).Methods(http.MethodPost)
 }
 
 func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
+
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
@@ -195,4 +201,181 @@ func (s *APIServer) handleGetMovementOfInventory(w http.ResponseWriter, r *http.
 		log.Fatal(err)
 		return
 	}
+}
+
+func (s *APIServer) handleGetEmployeesByDivision(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+	paramsList, ok := r.URL.Query()["division_id"]
+	divisionID := paramsList[0]
+
+	if !ok || len(paramsList) < 1{
+		http.Error(w, "Url Param 'division_id' is missing", http.StatusBadRequest)
+		return
+	}
+	if len(paramsList) > 1{
+		http.Error(w, "To many URL Params", http.StatusBadRequest)
+		return
+	}
+
+	log.Println(divisionID)
+
+	employees := model.EmployeeResponseList{EmployeesByDivisionList: service.GetEmployeesByDivision(s.Store.GetDB(), divisionID)}
+
+	jsonResponse, err := json.Marshal(employees)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func (s *APIServer) handleGetEmployeesByAgeAndSex(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+	paramsList, ok := r.URL.Query()["age"]
+	employeeAgeString := paramsList[0]
+
+	if !ok || len(paramsList) < 1{
+		http.Error(w, "Url Param 'age' is missing for age", http.StatusBadRequest)
+		return
+	}
+	if len(paramsList) > 1{
+		http.Error(w, "To many URL Params", http.StatusBadRequest)
+		return
+	}
+
+	employeeAge, err := strconv.Atoi(employeeAgeString)
+	if err != nil {
+		http.Error(w, "Can't convert URL Param 'age' to  int", http.StatusBadRequest)
+		return
+	}
+
+
+	paramsList, ok = r.URL.Query()["sex"]
+	employeeSex := paramsList[0]
+
+	if !ok || len(paramsList) < 1{
+		http.Error(w, "Url Param 'sex' is missing", http.StatusBadRequest)
+		return
+	}
+
+	if len(paramsList) > 1{
+		http.Error(w, "To many URL Params for sex", http.StatusBadRequest)
+		return
+	}
+
+	employees := model.EmployeeResponseList{EmployeesByDivisionList: service.GetEmployeesByAgeAndSex(s.Store.GetDB(), employeeAge, employeeSex)}
+
+	jsonResponse, err := json.Marshal(employees)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func (s *APIServer) handlePostInventory(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	divisionID := getID(r, "division_id")
+
+	decoder := json.NewDecoder(r.Body)
+	var inventory model.Inventory
+	err := decoder.Decode(&inventory)
+	log.Println(inventory)
+
+	if err!=nil{
+		http.Error(w, "Wrong request body", http.StatusBadRequest)
+		return
+	}
+
+	if inventory.InventoryNumber == "" || inventory.InventoryName == "" || inventory.InventoryModel == ""{
+		http.Error(w, "Some fields are empty", http.StatusBadRequest)
+		return
+	}
+
+	err = service.POSTInventory(s.Store.GetDB(), inventory, divisionID)
+	if err!=nil{
+		log.Println(err)
+		http.Error(w, "Inventory with this id already exists", http.StatusBadRequest)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(inventory)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func (s *APIServer) handlePostEmployees(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	divisionID := getID(r, "division_id")
+
+	decoder := json.NewDecoder(r.Body)
+	var employee model.Employee
+	err := decoder.Decode(&employee)
+
+	if err!=nil{
+		http.Error(w, "Wrong request body", http.StatusBadRequest)
+		return
+	}
+
+	if employee.EmployeeNumber == "" || employee.FirstName == "" || employee.LastName == "" ||
+		employee.SecondName == "" || employee.Position == "" || employee.Age == 0 || employee.Sex == ""{
+		http.Error(w, "Some fields are empty", http.StatusBadRequest)
+		return
+	}
+
+	err = service.POSTEmployee(s.Store.GetDB(), employee, divisionID)
+	if err!=nil{
+		log.Println(err)
+		http.Error(w, "Employee with this id already exists", http.StatusBadRequest)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(employee)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+// func getID returns id of an object from url
+func getID(req *http.Request, idName string) string {
+	vars := mux.Vars(req)
+	id := vars[idName]
+	return id
 }
