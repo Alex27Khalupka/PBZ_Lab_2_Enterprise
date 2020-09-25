@@ -187,3 +187,38 @@ func GetEmployeesByAgeAndSex(db *sql.DB, age int, sex string) []model.EmployeeRe
 	}
 	return employees
 }
+
+func GetInventoryByID(db *sql.DB, inventoryID string) model.Inventory{
+	rows, err := db.Query("SELECT inventory.inventory_number, inventory_name, inventory.inventory_model, " +
+		"inventory.year_of_issue FROM inventory WHERE inventory_number = $1", inventoryID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var inventory model.Inventory
+	for rows.Next() {
+		if err := rows.Scan(&inventory.InventoryNumber, &inventory.InventoryName, &inventory.InventoryModel,
+			&inventory.YearOfIssue); err != nil {
+			log.Fatal(err)
+		}
+	}
+	return inventory
+}
+
+func GetEmployeeByID(db *sql.DB, employeeID string) model.Employee{
+	rows, err := db.Query("SELECT employees.employee_number, employees.first_name, employees.last_name, " +
+		"employees.second_name, employees.position, employees.age, employees.sex FROM employees " +
+		"WHERE employee_number = $1", employeeID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var employee model.Employee
+	for rows.Next() {
+		if err := rows.Scan(&employee.EmployeeNumber, &employee.FirstName, &employee.LastName, &employee.SecondName,
+			&employee.Position, &employee.Age, &employee.Sex); err != nil {
+			log.Fatal(err)
+		}
+	}
+	return employee
+}

@@ -59,6 +59,8 @@ func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/movement_of_inventory", s.handleGetMovementOfInventory).Methods(http.MethodGet)
 	s.router.HandleFunc("/employees/{division_id}", s.handlePostEmployees).Methods(http.MethodPost)
 	s.router.HandleFunc("/inventory/{division_id}", s.handlePostInventory).Methods(http.MethodPost)
+	s.router.HandleFunc("/inventory/{inventory_id}", s.handlePutInventory).Methods(http.MethodPut)
+	s.router.HandleFunc("/employees/{employee_id}", s.handlePutEmployee).Methods(http.MethodPut)
 }
 
 func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
@@ -361,6 +363,81 @@ func (s *APIServer) handlePostEmployees(w http.ResponseWriter, r *http.Request){
 	}
 
 	jsonResponse, err := json.Marshal(employee)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func (s *APIServer) handlePutInventory(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	inventoryID := getID(r, "inventory_id")
+
+	decoder := json.NewDecoder(r.Body)
+	var inventory model.Inventory
+	err := decoder.Decode(&inventory)
+	log.Println(inventory)
+
+	if err!=nil{
+		http.Error(w, "Wrong request body", http.StatusBadRequest)
+		return
+	}
+
+	updatedInventory, err := service.PUTInventory(s.Store.GetDB(), inventory, inventoryID)
+	if err!=nil{
+		log.Println(err)
+		http.Error(w, "Some field have wrong format, or id already exists", http.StatusBadRequest)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(updatedInventory)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func (s *APIServer) handlePutEmployee(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	employeeID := getID(r, "employee_id")
+
+	decoder := json.NewDecoder(r.Body)
+	var employee model.Employee
+	err := decoder.Decode(&employee)
+
+	if err!=nil{
+		http.Error(w, "Wrong request body", http.StatusBadRequest)
+		return
+	}
+
+	updatedEmployee, err := service.PUTEmployee(s.Store.GetDB(), employee, employeeID)
+	if err!=nil{
+		log.Println(err)
+		http.Error(w, "Some field have wrong format, or id already exists", http.StatusBadRequest)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(updatedEmployee)
 	if err != nil {
 		log.Fatal(err)
 		return
