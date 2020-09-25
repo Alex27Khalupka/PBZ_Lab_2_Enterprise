@@ -35,3 +35,29 @@ func TestService_PUTInventory(t *testing.T) {
 	_, err = PUTInventory(db, inventory, "I2")
 	assert.NoError(t, err)
 }
+
+func TestService_PUTEmployee(t *testing.T) {
+	db, mock := NewMock()
+	defer db.Close()
+
+	query := "UPDATE employees SET employee_number = \\$1, first_name = \\$2, last_name = \\$3, second_name = \\$4, " +
+		"position = \\$5, age = \\$6, sex = \\$7 WHERE employee_number = \\$8"
+
+
+	employee := model.Employee{
+		EmployeeNumber: "1",
+		FirstName:      "2",
+		LastName:       "3",
+		SecondName:     "4",
+		Position:       "5",
+		Age:            6,
+		Sex:            "7",
+	}
+
+	prep := mock.ExpectPrepare(query)
+	prep.ExpectExec().WithArgs("1", "2", "3", "4", "5", 6, "7").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	_, err := PUTEmployee(db, employee, "E0")
+	assert.NoError(t, err)
+}
