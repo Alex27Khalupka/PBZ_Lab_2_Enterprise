@@ -148,9 +148,14 @@ func GetMovementOfInventory(db *sql.DB) []model.MovementOfInventory {
 }
 
 func GetEmployeesByDivision(db *sql.DB, id string) []model.EmployeeResponse {
-	rows, err := db.Query("SELECT employees.first_name, employees.last_name, employees.second_name, " +
-		"employees.age FROM employees INNER JOIN movement_of_employees ON employees.employee_number = " +
-		"movement_of_employees.employee_number WHERE movement_of_employees.division_number = $1", id)
+	rows, err := db.Query("SELECT DISTINCT employees.first_name, employees.last_name, employees.second_name, employees.age " +
+		"FROM employees " +
+		"INNER JOIN movement_of_employees ON employees.employee_number = movement_of_employees.employee_number " +
+		"WHERE division_number = " +
+		"(SELECT DISTINCT division_number FROM movement_of_employees " +
+		"WHERE movement_of_employees.employee_number = employees.employee_number AND movement_date = " +
+		"(SELECT MAX(movement_date) FROM movement_of_employees " +
+		"WHERE employee_number = employees.employee_number)) AND division_number = $1", id)
 	if err != nil {
 		log.Fatal(err)
 	}

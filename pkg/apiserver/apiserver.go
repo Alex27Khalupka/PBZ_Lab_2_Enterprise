@@ -224,7 +224,7 @@ func (s *APIServer) handleGetEmployeesByDivision(w http.ResponseWriter, r *http.
 		return
 	}
 
-	log.Println(divisionID)
+	//log.Println(divisionID)
 
 	employees := model.EmployeeResponseList{EmployeesByDivisionList: service.GetEmployeesByDivision(s.Store.GetDB(), divisionID)}
 
