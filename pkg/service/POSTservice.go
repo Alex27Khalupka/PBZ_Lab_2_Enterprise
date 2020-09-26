@@ -87,3 +87,24 @@ func POSTMovementOfInventory(db *sql.DB, inventoryNumber string, divisionID stri
 
 	return nil
 }
+
+func POSTRepair(db *sql.DB, repair model.Repair) error{
+
+	query := "INSERT INTO inventory (repairs.repair_id, repairs.inventory_number, repairs.service_start_date, " +
+		"repairs.repair_type, repairs.days_to_repair, repairs.employee_number, repairs.waybill_number) " +
+		"VALUES ($1, $2, $3, $4, $5, $6, $7)"
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(repair.RepairID, repair.InventoryNumber, repair.ServiceStartDay, repair.RepairType,
+		repair.RepairTime, repair.EmployeeNumber, repair.WaybillNumber)
+
+	if err !=nil{
+		return err
+	}
+
+	return nil
+}

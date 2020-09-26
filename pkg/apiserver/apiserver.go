@@ -59,6 +59,7 @@ func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/movement_of_inventory", s.handleGetMovementOfInventory).Methods(http.MethodGet)
 	s.router.HandleFunc("/employees/{division_id}", s.handlePostEmployees).Methods(http.MethodPost)
 	s.router.HandleFunc("/inventory/{division_id}", s.handlePostInventory).Methods(http.MethodPost)
+	s.router.HandleFunc("/repairs", s.handlePostRepair).Methods(http.MethodPost)
 	s.router.HandleFunc("/inventory/{inventory_id}", s.handlePutInventory).Methods(http.MethodPut)
 	s.router.HandleFunc("/employees/{employee_id}", s.handlePutEmployee).Methods(http.MethodPut)
 	s.router.HandleFunc("/employees/{employee_id}", s.handleDeleteEmployee).Methods(http.MethodDelete)
@@ -322,6 +323,48 @@ func (s *APIServer) handlePostInventory(w http.ResponseWriter, r *http.Request){
 	}
 
 	jsonResponse, err := json.Marshal(inventory)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func (s *APIServer) handlePostRepair(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var repair model.Repair
+	err := decoder.Decode(&repair)
+	log.Println(repair)
+
+	if err!=nil{
+		http.Error(w, "Wrong request body", http.StatusBadRequest)
+		return
+	}
+
+	if repair.RepairID == "" || repair.InventoryNumber == "" || repair.EmployeeNumber == "" || repair.RepairType == "" ||
+		repair.RepairTime == 0 || repair.WaybillNumber == "" || repair.ServiceStartDay.IsZero(){
+		http.Error(w, "Some fields are empty", http.StatusBadRequest)
+		return
+	}
+
+	err = service.POSTRepair(s.Store.GetDB(), repair)
+	if err!=nil{
+		log.Println(err)
+		http.Error(w, "Repair with this id already exists", http.StatusBadRequest)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(repair)
 	if err != nil {
 		log.Fatal(err)
 		return
