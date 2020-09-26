@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func TestService_PUTInventory(t *testing.T) {
+func TestService_UpdateInventory(t *testing.T) {
 	db, mock := NewMock()
 	defer db.Close()
 
@@ -30,13 +30,14 @@ func TestService_PUTInventory(t *testing.T) {
 	}
 
 	prep := mock.ExpectPrepare(query)
-	prep.ExpectExec().WithArgs("I", "name", "model", date).WillReturnResult(sqlmock.NewResult(0, 1))
+	prep.ExpectExec().WithArgs("I", "name", "model", date, "I2").
+		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	_, err = PUTInventory(db, inventory, "I2")
+	err = UpdateInventory(db, inventory, "I2")
 	assert.NoError(t, err)
 }
 
-func TestService_PUTEmployee(t *testing.T) {
+func TestService_UpdateEmployee(t *testing.T) {
 	db, mock := NewMock()
 	defer db.Close()
 
@@ -58,6 +59,6 @@ func TestService_PUTEmployee(t *testing.T) {
 	prep.ExpectExec().WithArgs("1", "2", "3", "4", "5", 6, "7").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	_, err := PUTEmployee(db, employee, "E0")
+	err := UpdateEmployee(db, employee, "E0")
 	assert.NoError(t, err)
 }

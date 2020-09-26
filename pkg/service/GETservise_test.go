@@ -325,46 +325,28 @@ func TestService_GetMovementOfInventory(t *testing.T){
 }
 
 func TestService_GetEmployeesByDivision(t *testing.T){
-	db, mock, err := sqlmock.New()
+	db, mock := NewMock()
 
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
 	defer db.Close()
+
+	query := "SELECT DISTINCT employees.first_name, employees.last_name, employees.second_name, employees.age " +
+		"FROM employees " +
+		"INNER JOIN movement_of_employees ON employees.employee_number = movement_of_employees.employee_number " +
+		"WHERE division_number = \\(SELECT DISTINCT division_number FROM movement_of_employees " +
+		"WHERE movement_of_employees.employee_number = employees.employee_number AND movement_date = " +
+		"\\(SELECT MAX\\(movement_date\\) FROM movement_of_employees WHERE employee_number = employees.employee_number\\)\\) " +
+		"AND division_number = \\$1"
 
 	rows := sqlmock.NewRows([]string{"first_name", "last_name", "second_name", "age"}).
 		AddRow( "Kimi", "Raikonnen", "Matias", 99).
 		AddRow( "Alex", "Khalupka", "Andreevich", 19).
 		AddRow( "Alex", "Lapitsky", "Evgenevich", 20)
 
-	mock.ExpectQuery("^SELECT (.+) FROM employees INNER JOIN movement_of_employees ON " +
-		"employees.employee_number = movement_of_employees.employee_number " +
-		"WHERE movement_of_employees.division_number = (.+)").WillReturnRows(rows)
+	mock.ExpectQuery(query).WithArgs("D1").WillReturnRows(rows)
 
-	expectedEmployees := []model.EmployeeResponse{
-		{
-			FirstName: "Kimi",
-			LastName: "Raikonnen",
-			SecondName: "Matias",
-			DateOfBirth: 1921,
-		},
-		{
-			FirstName: "Alex",
-			LastName: "Khalupka",
-			SecondName: "Andreevich",
-			DateOfBirth: 2001,
-		},
-		{
-			FirstName: "Alex",
-			LastName: "Lapitsky",
-			SecondName: "Evgenevich",
-			DateOfBirth: 2000,
-		},
-	}
+	employees := GetEmployeesByDivision(db, "D1")
 
-	employees := GetEmployeesByDivision(db, "D2")
-
-	assert.Equal(t, expectedEmployees, employees)
+	assert.NotNil(t, employees)
 }
 
 func TestService_GetEmployeesByAgeAndSex(t *testing.T){
