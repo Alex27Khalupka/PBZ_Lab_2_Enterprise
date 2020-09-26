@@ -5,7 +5,7 @@ import (
 	"github.com/Alex27Khalupka/PBZ_Lab_2_Enterprise/pkg/model"
 )
 
-func PUTInventory(db *sql.DB, inventoryToUpdate model.Inventory, inventoryID string) (model.Inventory, error){
+func PUTInventory(db *sql.DB, inventoryToUpdate model.Inventory, inventoryID string) (model.Inventory, error) {
 
 	inventory := GetInventoryByID(db, inventoryID)
 
@@ -25,22 +25,30 @@ func PUTInventory(db *sql.DB, inventoryToUpdate model.Inventory, inventoryID str
 		inventoryToUpdate.YearOfIssue = inventory.YearOfIssue
 	}
 
+	if err := UpdateInventory(db, inventoryToUpdate, inventoryID); err!=nil{
+		return inventory, err
+	}
+
+	return inventoryToUpdate, nil
+}
+
+func UpdateInventory(db *sql.DB, inventoryToUpdate model.Inventory, inventoryID string) error {
 	query := "UPDATE inventory SET inventory_number = $1, inventory_name = $2, inventory_model = $3, " +
 		"year_of_issue = $4 WHERE inventory_number = $5"
 
 	stmt, err := db.Prepare(query)
 	if err != nil {
-		return inventory,err
+		return err
 	}
 	defer stmt.Close()
 
 	_, err = stmt.Exec(inventoryToUpdate.InventoryNumber, inventoryToUpdate.InventoryName,
 		inventoryToUpdate.InventoryModel, inventoryToUpdate.YearOfIssue, inventoryID)
 
-	return inventoryToUpdate, err
+	return err
 }
 
-func PUTEmployee(db *sql.DB, employeeToUpdate model.Employee, employeeID string) (model.Employee, error){
+func PUTEmployee(db *sql.DB, employeeToUpdate model.Employee, employeeID string) (model.Employee, error) {
 
 	employee := GetEmployeeByID(db, employeeID)
 
@@ -72,18 +80,25 @@ func PUTEmployee(db *sql.DB, employeeToUpdate model.Employee, employeeID string)
 		employeeToUpdate.Sex = employee.Sex
 	}
 
+	if err := UpdateEmployee(db, employeeToUpdate, employeeID); err != nil {
+		return employee, err
+	}
 
+	return employeeToUpdate, nil
+}
+
+func UpdateEmployee(db *sql.DB, employeeToUpdate model.Employee, employeeID string) error {
 	query := "UPDATE employees SET employee_number = $1, first_name = $2, last_name = $3, second_name = $4, " +
 		"position = $5, age = $6, sex = $7 WHERE employee_number = $8"
 
 	stmt, err := db.Prepare(query)
 	if err != nil {
-		return employee, err
+		return err
 	}
 	defer stmt.Close()
 
 	_, err = stmt.Exec(employeeToUpdate.EmployeeNumber, employeeToUpdate.FirstName, employeeToUpdate.LastName,
 		employeeToUpdate.SecondName, employeeToUpdate.Position, employeeToUpdate.Age, employeeToUpdate.Sex, employeeID)
 
-	return employeeToUpdate, err
+	return nil
 }
