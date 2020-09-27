@@ -4,7 +4,12 @@ import (
 	"database/sql"
 	"github.com/Alex27Khalupka/PBZ_Lab_2_Enterprise/pkg/model"
 	"log"
+	"strconv"
 	"time"
+)
+
+const (
+	shortForm = "2006-01-02"
 )
 
 func GetDivisions(db *sql.DB) []model.Division {
@@ -297,4 +302,46 @@ func GetDivisionNameByID(db *sql.DB, divisionNumbers []string) []string{
 	}
 
 	return divisionsNames
+}
+
+func GetInventoryByYears(db *sql.DB, years int, divisionID string, inventoryName string) int{
+	log.Println(inventoryName+"|")
+	currentYear, monthInt, dayInt := time.Now().Date()
+	year := strconv.Itoa(currentYear - years)
+	month := strconv.Itoa(int(monthInt))
+	day := strconv.Itoa(dayInt)
+	if len(day) < 2 {
+		day = "0" + day
+	}
+
+	if len(month) < 2 {
+		month = "0" + month
+	}
+
+	dateToParse := year + "-" + month + "-" + day
+
+	date, err := time.Parse(shortForm, dateToParse)
+	if err !=nil{
+		log.Fatal(err)
+	}
+
+	log.Println(date)
+	log.Println(divisionID)
+	rows, err := db.Query("SELECT count(*) FROM movement_of_inventory INNER JOIN  inventory " +
+		"ON inventory.inventory_number = movement_of_inventory.inventory_number WHERE movement_date > $1 AND " +
+		"inventory_name = $2 AND division_number = $3", date, inventoryName, divisionID)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var inventoryAmount int
+	for rows.Next() {
+
+		if err := rows.Scan(&inventoryAmount); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	return inventoryAmount
 }

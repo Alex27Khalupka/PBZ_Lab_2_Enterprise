@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type APIServer struct{
@@ -52,6 +53,7 @@ func (s *APIServer) configureRouter(){
 	s.router.Path("/employees").Queries("division_id", "{division_id}").HandlerFunc(s.handleGetEmployeesByDivision).Methods(http.MethodGet)
 	s.router.Path("/employees").Queries("age", "{age}", "sex", "{sex}").HandlerFunc(s.handleGetEmployeesByAgeAndSex).Methods(http.MethodGet)
 	s.router.HandleFunc("/employees", s.handleGetEmployees).Methods(http.MethodGet)
+	s.router.Path("/inventory").Queries("years", "{years}", "division_id", "{division_id}", "name", "{name}").HandlerFunc(s.handleInventoryByYear).Methods(http.MethodGet)
 	s.router.HandleFunc("/inventory", s.handleGetInventory).Methods(http.MethodGet)
 	s.router.HandleFunc("/repairs", s.handleGetRepairs).Methods(http.MethodGet)
 	s.router.HandleFunc("/waybills", s.handleGetWaybills).Methods(http.MethodGet)
@@ -282,6 +284,71 @@ func (s *APIServer) handleGetEmployeesByAgeAndSex(w http.ResponseWriter, r *http
 	employees := model.EmployeeResponseList{EmployeesByDivisionList: service.GetEmployeesByAgeAndSex(s.Store.GetDB(), employeeAge, employeeSex)}
 
 	jsonResponse, err := json.Marshal(employees)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func (s *APIServer) handleInventoryByYear(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+	paramsList, ok := r.URL.Query()["years"]
+	yearsStr := paramsList[0]
+
+	if !ok || len(paramsList) < 1{
+		http.Error(w, "Url Param 'years' is missing", http.StatusBadRequest)
+		return
+	}
+	if len(paramsList) > 1{
+		http.Error(w, "To many URL Params", http.StatusBadRequest)
+		return
+	}
+
+	years, err := strconv.Atoi(yearsStr)
+	if err != nil {
+		http.Error(w, "Can't convert URL Param 'years' to  int", http.StatusBadRequest)
+		return
+	}
+
+
+	paramsList, ok = r.URL.Query()["division_id"]
+	divisionID := paramsList[0]
+
+	if !ok || len(paramsList) < 1{
+		http.Error(w, "Url Param 'division_id' is missing", http.StatusBadRequest)
+		return
+	}
+
+	if len(paramsList) > 1{
+		http.Error(w, "To many URL Params for division_id", http.StatusBadRequest)
+		return
+	}
+
+	paramsList, ok = r.URL.Query()["name"]
+	inventoryName := paramsList[0]
+
+	if !ok || len(paramsList) < 1{
+		http.Error(w, "Url Param 'name' is missing", http.StatusBadRequest)
+		return
+	}
+
+	if len(paramsList) > 1{
+		http.Error(w, "To many URL Params for name", http.StatusBadRequest)
+		return
+	}
+
+	inventoryName = strings.Replace(inventoryName, "_", " ", -1)
+	inventoryAmount := service.GetInventoryByYears(s.Store.GetDB(), years, divisionID, inventoryName)
+
+	jsonResponse, err := json.Marshal(inventoryAmount)
 	if err != nil {
 		log.Fatal(err)
 		return

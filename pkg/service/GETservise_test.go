@@ -9,9 +9,6 @@ import (
 	"time"
 )
 
-const (
-	shortForm = "2006-01-02"
-)
 
 func TestService_GetDivisions(t *testing.T){
 	// Creates sqlmock database connection and a mock to manage expectations.

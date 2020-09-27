@@ -98,7 +98,7 @@ func TestService_POSTMovementOFEmployees(t *testing.T) {
 		"\\(\\$1, \\$2, \\$3\\)"
 
 	prep := mock.ExpectPrepare(query)
-	prep.ExpectExec().WithArgs(employee.EmployeeNumber, time.Now().Format("2020-01-01"), "D5").
+	prep.ExpectExec().WithArgs(employee.EmployeeNumber, time.Now().Format(shortForm), "D5").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	err := POSTMovementOfEmployees(db, employee.EmployeeNumber, "D5")
@@ -192,7 +192,7 @@ func TestService_POSTMovementOFInventory(t *testing.T) {
 		"\\(\\$1, \\$2, \\$3\\)"
 
 	prep := mock.ExpectPrepare(query)
-	prep.ExpectExec().WithArgs(inventoryNumber, time.Now().Format("2020-01-01"), "D5").
+	prep.ExpectExec().WithArgs(inventoryNumber, time.Now().Format(shortForm), "D5").
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	err := POSTMovementOfInventory(db, inventoryNumber, "D5")
