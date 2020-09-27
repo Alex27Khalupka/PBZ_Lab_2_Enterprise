@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"github.com/Alex27Khalupka/PBZ_Lab_2_Enterprise/pkg/model"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -38,7 +39,7 @@ func POSTMovementOfEmployees(db *sql.DB, employeeNumber string, divisionID strin
 		return err
 	}
 	defer stmt.Close()
-	_, err = stmt.Exec(employeeNumber, time.Now().Format("2020-01-01"), divisionID)
+	_, err = stmt.Exec(employeeNumber, time.Now().Format("2006-01-02"), divisionID)
 
 	if err !=nil{
 		return err
@@ -79,7 +80,7 @@ func POSTMovementOfInventory(db *sql.DB, inventoryNumber string, divisionID stri
 		return err
 	}
 	defer stmt.Close()
-	_, err = stmt.Exec(inventoryNumber, time.Now().Format("2020-01-01"), divisionID)
+	_, err = stmt.Exec(inventoryNumber, time.Now().Format("2006-01-02"), divisionID)
 
 	if err !=nil{
 		return err
@@ -90,8 +91,76 @@ func POSTMovementOfInventory(db *sql.DB, inventoryNumber string, divisionID stri
 
 func POSTRepair(db *sql.DB, repair model.Repair) error{
 
-	query := "INSERT INTO inventory (repairs.repair_id, repairs.inventory_number, repairs.service_start_date, " +
-		"repairs.repair_type, repairs.days_to_repair, repairs.employee_number, repairs.waybill_number) " +
+	if err := CreateRepair(db, repair); err!=nil{
+		return err
+	}
+
+	if err := CreateDivisionRepair(db, repair); err!=nil{
+		return err
+	}
+
+	return nil
+}
+
+func CreateDivisionRepair(db *sql.DB, repair model.Repair) error{
+
+	query := "INSERT INTO division_repair (division_number, repair_id) VALUES ($1, $2)"
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	divisionID, err := GetInventoryDivisionID(db, repair.InventoryNumber)
+	if err!=nil{
+		return err
+	}
+	_, err = stmt.Exec(divisionID, repair.RepairID)
+
+	if err !=nil{
+		return err
+	}
+
+	return nil
+}
+
+func GetInventoryDivisionID(db *sql.DB, inventoryNumber string) (string, error){
+	query := "SELECT DISTINCT movement_of_inventory.division_number FROM inventory " +
+		"INNER JOIN movement_of_inventory ON inventory.inventory_number = movement_of_inventory.inventory_number " +
+		"WHERE division_number = " +
+		"(SELECT DISTINCT division_number FROM movement_of_inventory " +
+		"WHERE movement_of_inventory.inventory_number = inventory.inventory_number AND movement_date = " +
+		"(SELECT MAX(movement_date) FROM movement_of_inventory WHERE inventory_number = inventory.inventory_number)) " +
+		"AND inventory.inventory_number = $1"
+
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		return "", err
+	}
+	defer stmt.Close()
+
+	rows, err := db.Query(query, inventoryNumber)
+
+	if err !=nil{
+		return "", err
+	}
+
+	var divisionID string
+	for rows.Next(){
+		err := rows.Scan(&divisionID)
+		if err != nil{
+			log.Fatal(err)
+		}
+	}
+
+	//log.Println("kek : ", inventoryNumber)
+	return divisionID, nil
+}
+
+func CreateRepair(db *sql.DB, repair model.Repair) error{
+
+	query := "INSERT INTO repairs (repair_id, inventory_number, service_start_date, " +
+		"repair_type, days_to_repair, employee_number, waybill_number) " +
 		"VALUES ($1, $2, $3, $4, $5, $6, $7)"
 	stmt, err := db.Prepare(query)
 	if err != nil {
@@ -99,10 +168,35 @@ func POSTRepair(db *sql.DB, repair model.Repair) error{
 	}
 	defer stmt.Close()
 
+
+	daysToRepair := strconv.Itoa(int(repair.RepairTime)) + " days"
+	//log.Println(string(repair.RepairTime))
+
 	_, err = stmt.Exec(repair.RepairID, repair.InventoryNumber, repair.ServiceStartDay, repair.RepairType,
-		repair.RepairTime, repair.EmployeeNumber, repair.WaybillNumber)
+		daysToRepair, repair.EmployeeNumber, repair.WaybillNumber)
 
 	if err !=nil{
+		return err
+	}
+
+	return nil
+}
+
+func POSTWaybill(db *sql.DB, waybill model.Waybill) error{
+
+	query := "INSERT INTO waybills (waybill_number, receiving_date, price, detail_name) "  +
+		"VALUES ($1, $2, $3, $4)"
+
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(waybill.WaybillNumber, waybill.ReceivingDate, waybill.Price, waybill.DetailName)
+
+	if err !=nil{
+		log.Println(err)
 		return err
 	}
 

@@ -35,9 +35,9 @@ type Employee struct {
 type Repair struct {
 	RepairID        string    `json:"repair_id"`
 	InventoryNumber string    `json:"inventory_number"`
-	ServiceStartDay time.Time `json:"service_start_day"`
+	ServiceStartDay time.Time `json:"service_start_date"`
 	RepairType      string    `json:"repair_type"`
-	RepairTime      int64     `json:"repair_time"`
+	RepairTime      int64     `json:"days_to_repair"`
 	EmployeeNumber  string    `json:"employee_number"`
 	WaybillNumber   string    `json:"waybill_number"`
 }

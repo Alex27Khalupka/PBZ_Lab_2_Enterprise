@@ -56,10 +56,11 @@ func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/repairs", s.handleGetRepairs).Methods(http.MethodGet)
 	s.router.HandleFunc("/waybills", s.handleGetWaybills).Methods(http.MethodGet)
 	s.router.HandleFunc("/movement_of_employees", s.handleGetMovementOfEmployees).Methods(http.MethodGet)
-	s.router.HandleFunc("/movement_of_inventory", s.handleGetMovementOfInventory).Methods(http.MethodGet)
+	s.router.HandleFunc("/divisions/max_repairs_amount", s.handleGetDivisionMaxRepairAmount).Methods(http.MethodGet)
 	s.router.HandleFunc("/employees/{division_id}", s.handlePostEmployees).Methods(http.MethodPost)
 	s.router.HandleFunc("/inventory/{division_id}", s.handlePostInventory).Methods(http.MethodPost)
 	s.router.HandleFunc("/repairs", s.handlePostRepair).Methods(http.MethodPost)
+	s.router.HandleFunc("/waybills", s.handlePostWaybill).Methods(http.MethodPost)
 	s.router.HandleFunc("/inventory/{inventory_id}", s.handlePutInventory).Methods(http.MethodPut)
 	s.router.HandleFunc("/employees/{employee_id}", s.handlePutEmployee).Methods(http.MethodPut)
 	s.router.HandleFunc("/employees/{employee_id}", s.handleDeleteEmployee).Methods(http.MethodDelete)
@@ -292,6 +293,27 @@ func (s *APIServer) handleGetEmployeesByAgeAndSex(w http.ResponseWriter, r *http
 	}
 }
 
+func (s *APIServer) handleGetDivisionMaxRepairAmount(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	divisionsNames := service.GetDivisionMaxRepairsAmount(s.Store.GetDB())
+	log.Println(divisionsNames)
+
+	jsonResponse, err := json.Marshal(divisionsNames)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
 func (s *APIServer) handlePostInventory(w http.ResponseWriter, r *http.Request){
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
@@ -365,6 +387,47 @@ func (s *APIServer) handlePostRepair(w http.ResponseWriter, r *http.Request){
 	}
 
 	jsonResponse, err := json.Marshal(repair)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	if _, err = w.Write(jsonResponse); err != nil {
+		log.Fatal(err)
+		return
+	}
+}
+
+func (s *APIServer) handlePostWaybill(w http.ResponseWriter, r *http.Request){
+	if err := s.Store.Open(); err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var waybill model.Waybill
+	err := decoder.Decode(&waybill)
+
+	if err!=nil{
+		log.Println(err)
+		http.Error(w, "Wrong request body", http.StatusBadRequest)
+		return
+	}
+
+	if waybill.WaybillNumber == "" || waybill.ReceivingDate.IsZero() || waybill.Price == 0 || waybill.DetailName == ""{
+		http.Error(w, "Some fields are empty", http.StatusBadRequest)
+		return
+	}
+
+	err = service.POSTWaybill(s.Store.GetDB(), waybill)
+	if err!=nil{
+		log.Println(err)
+		http.Error(w, "Repair with this id already exists", http.StatusBadRequest)
+		return
+	}
+
+	jsonResponse, err := json.Marshal(waybill)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -526,6 +589,8 @@ func (s *APIServer) handleDeleteInventory(w http.ResponseWriter, req *http.Reque
 	w.WriteHeader(http.StatusNoContent)
 
 }
+
+
 
 // func getID returns id of an object from url
 func getID(req *http.Request, idName string) string {

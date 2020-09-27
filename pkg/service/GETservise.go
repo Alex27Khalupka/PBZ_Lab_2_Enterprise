@@ -227,3 +227,74 @@ func GetEmployeeByID(db *sql.DB, employeeID string) model.Employee{
 	}
 	return employee
 }
+
+func GetDivisionMaxRepairsAmount(db *sql.DB) []string{
+	max := GetMaxRepairs(db)
+
+	divisionsNumbers := GetDivisionNumberWithMaxRepairsAmount(db, max)
+
+	divisionsNames := GetDivisionNameByID(db, divisionsNumbers)
+
+	return divisionsNames
+}
+
+func GetMaxRepairs(db *sql.DB) int64{
+	rows, err := db.Query("SELECT MAX(count) FROM (SELECT division_number, count(*) FROM division_repair " +
+		"GROUP BY division_number) AS foo;")
+
+	if err != nil{
+		log.Fatal(err)
+	}
+
+	var maxRepairs int64
+	for rows.Next() {
+		if err := rows.Scan(&maxRepairs); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	return maxRepairs
+}
+
+func GetDivisionNumberWithMaxRepairsAmount(db *sql.DB, max int64) []string{
+	rows, err := db.Query("SELECT division_number FROM (SELECT division_number, count(*) FROM division_repair " +
+		"GROUP BY division_number) AS foo WHERE count = $1", max)
+
+	if err != nil{
+		log.Fatal(err)
+	}
+
+	var divisionsNumbers []string
+	for rows.Next() {
+		var divisionNumber string
+		if err := rows.Scan(&divisionNumber); err != nil {
+			log.Fatal(err)
+		}
+		divisionsNumbers = append(divisionsNumbers, divisionNumber)
+	}
+
+	return divisionsNumbers
+}
+
+func GetDivisionNameByID(db *sql.DB, divisionNumbers []string) []string{
+	var divisionsNames []string
+
+	for _, divisionNumber := range divisionNumbers {
+		rows, err := db.Query("SELECT division_name FROM divisions WHERE division_number "+
+			"IN ($1)", divisionNumber)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for rows.Next() {
+			var divisionName string
+			if err := rows.Scan(&divisionName); err != nil {
+				log.Fatal(err)
+			}
+			divisionsNames = append(divisionsNames, divisionName)
+		}
+	}
+
+	return divisionsNames
+}
