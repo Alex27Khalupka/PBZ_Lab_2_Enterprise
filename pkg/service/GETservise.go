@@ -305,7 +305,6 @@ func GetDivisionNameByID(db *sql.DB, divisionNumbers []string) []string{
 }
 
 func GetInventoryByYears(db *sql.DB, years int, divisionID string, inventoryName string) int{
-	log.Println(inventoryName+"|")
 	currentYear, monthInt, dayInt := time.Now().Date()
 	year := strconv.Itoa(currentYear - years)
 	month := strconv.Itoa(int(monthInt))
@@ -325,8 +324,6 @@ func GetInventoryByYears(db *sql.DB, years int, divisionID string, inventoryName
 		log.Fatal(err)
 	}
 
-	log.Println(date)
-	log.Println(divisionID)
 	rows, err := db.Query("SELECT count(*) FROM movement_of_inventory INNER JOIN  inventory " +
 		"ON inventory.inventory_number = movement_of_inventory.inventory_number WHERE movement_date > $1 AND " +
 		"inventory_name = $2 AND division_number = $3", date, inventoryName, divisionID)

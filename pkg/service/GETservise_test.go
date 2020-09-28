@@ -5,6 +5,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"log"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -380,4 +381,45 @@ func TestService_GetEmployeesByAgeAndSex(t *testing.T){
 	}
 
 	assert.Equal(t, expectedEmployees, employees)
+}
+
+func TestService_GetInventoryByYear(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"0"})
+
+	years := 3
+	currentYear, monthInt, dayInt := time.Now().Date()
+	year := strconv.Itoa(currentYear - years)
+	month := strconv.Itoa(int(monthInt))
+	day := strconv.Itoa(dayInt)
+	if len(day) < 2 {
+		day = "0" + day
+	}
+
+	if len(month) < 2 {
+		month = "0" + month
+	}
+
+	dateToParse := year + "-" + month + "-" + day
+	date, err := time.Parse(shortForm, dateToParse)
+	if err !=nil{
+		log.Fatal(err)
+	}
+
+	mock.ExpectQuery("SELECT count\\(\\*\\) FROM movement_of_inventory INNER JOIN inventory ON " +
+		"inventory.inventory_number = movement_of_inventory.inventory_number WHERE movement_date \\> \\$1 " +
+		"AND inventory_name = \\$2 AND division_number = \\$3").
+		WithArgs(date, "name", "D").
+		WillReturnRows(rows)
+
+	log.Println(date.Year())
+	count := GetInventoryByYears(db, years, "D", "name")
+
+	assert.Equal(t, 0, count)
 }
