@@ -25,7 +25,7 @@ func PUTInventory(db *sql.DB, inventoryToUpdate model.Inventory, inventoryID str
 		inventoryToUpdate.YearOfIssue = inventory.YearOfIssue
 	}
 
-	if err := UpdateInventory(db, inventoryToUpdate, inventoryID); err!=nil{
+	if err := UpdateInventory(db, inventoryToUpdate, inventoryID); err != nil {
 		return inventory, err
 	}
 

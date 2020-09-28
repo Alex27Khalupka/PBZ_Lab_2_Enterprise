@@ -153,13 +153,13 @@ func GetMovementOfInventory(db *sql.DB) []model.MovementOfInventory {
 }
 
 func GetEmployeesByDivision(db *sql.DB, id string) []model.EmployeeResponse {
-	rows, err := db.Query("SELECT DISTINCT employees.first_name, employees.last_name, employees.second_name, employees.age " +
-		"FROM employees " +
-		"INNER JOIN movement_of_employees ON employees.employee_number = movement_of_employees.employee_number " +
-		"WHERE division_number = " +
-		"(SELECT DISTINCT division_number FROM movement_of_employees " +
-		"WHERE movement_of_employees.employee_number = employees.employee_number AND movement_date = " +
-		"(SELECT MAX(movement_date) FROM movement_of_employees " +
+	rows, err := db.Query("SELECT DISTINCT employees.first_name, employees.last_name, employees.second_name, employees.age "+
+		"FROM employees "+
+		"INNER JOIN movement_of_employees ON employees.employee_number = movement_of_employees.employee_number "+
+		"WHERE division_number = "+
+		"(SELECT DISTINCT division_number FROM movement_of_employees "+
+		"WHERE movement_of_employees.employee_number = employees.employee_number AND movement_date = "+
+		"(SELECT MAX(movement_date) FROM movement_of_employees "+
 		"WHERE employee_number = employees.employee_number)) AND division_number = $1", id)
 	if err != nil {
 		log.Fatal(err)
@@ -179,7 +179,7 @@ func GetEmployeesByDivision(db *sql.DB, id string) []model.EmployeeResponse {
 }
 
 func GetEmployeesByAgeAndSex(db *sql.DB, age int, sex string) []model.EmployeeResponse {
-	rows, err := db.Query("SELECT employees.first_name, employees.last_name, employees.second_name, " +
+	rows, err := db.Query("SELECT employees.first_name, employees.last_name, employees.second_name, "+
 		"employees.age FROM employees WHERE employees.age = $1 AND employees.sex = $2", age, sex)
 	if err != nil {
 		log.Fatal(err)
@@ -198,8 +198,8 @@ func GetEmployeesByAgeAndSex(db *sql.DB, age int, sex string) []model.EmployeeRe
 	return employees
 }
 
-func GetInventoryByID(db *sql.DB, inventoryID string) model.Inventory{
-	rows, err := db.Query("SELECT inventory.inventory_number, inventory_name, inventory.inventory_model, " +
+func GetInventoryByID(db *sql.DB, inventoryID string) model.Inventory {
+	rows, err := db.Query("SELECT inventory.inventory_number, inventory_name, inventory.inventory_model, "+
 		"inventory.year_of_issue FROM inventory WHERE inventory_number = $1", inventoryID)
 	if err != nil {
 		log.Fatal(err)
@@ -215,9 +215,9 @@ func GetInventoryByID(db *sql.DB, inventoryID string) model.Inventory{
 	return inventory
 }
 
-func GetEmployeeByID(db *sql.DB, employeeID string) model.Employee{
-	rows, err := db.Query("SELECT employees.employee_number, employees.first_name, employees.last_name, " +
-		"employees.second_name, employees.position, employees.age, employees.sex FROM employees " +
+func GetEmployeeByID(db *sql.DB, employeeID string) model.Employee {
+	rows, err := db.Query("SELECT employees.employee_number, employees.first_name, employees.last_name, "+
+		"employees.second_name, employees.position, employees.age, employees.sex FROM employees "+
 		"WHERE employee_number = $1", employeeID)
 	if err != nil {
 		log.Fatal(err)
@@ -233,7 +233,7 @@ func GetEmployeeByID(db *sql.DB, employeeID string) model.Employee{
 	return employee
 }
 
-func GetDivisionMaxRepairsAmount(db *sql.DB) []string{
+func GetDivisionMaxRepairsAmount(db *sql.DB) []string {
 	max := GetMaxRepairs(db)
 
 	divisionsNumbers := GetDivisionNumberWithMaxRepairsAmount(db, max)
@@ -243,11 +243,11 @@ func GetDivisionMaxRepairsAmount(db *sql.DB) []string{
 	return divisionsNames
 }
 
-func GetMaxRepairs(db *sql.DB) int64{
+func GetMaxRepairs(db *sql.DB) int64 {
 	rows, err := db.Query("SELECT MAX(count) FROM (SELECT division_number, count(*) FROM division_repair " +
 		"GROUP BY division_number) AS foo")
 
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -261,11 +261,11 @@ func GetMaxRepairs(db *sql.DB) int64{
 	return maxRepairs
 }
 
-func GetDivisionNumberWithMaxRepairsAmount(db *sql.DB, max int64) []string{
-	rows, err := db.Query("SELECT division_number FROM (SELECT division_number, count(*) FROM division_repair " +
+func GetDivisionNumberWithMaxRepairsAmount(db *sql.DB, max int64) []string {
+	rows, err := db.Query("SELECT division_number FROM (SELECT division_number, count(*) FROM division_repair "+
 		"GROUP BY division_number) AS foo WHERE count = $1", max)
 
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -281,7 +281,7 @@ func GetDivisionNumberWithMaxRepairsAmount(db *sql.DB, max int64) []string{
 	return divisionsNumbers
 }
 
-func GetDivisionNameByID(db *sql.DB, divisionNumbers []string) []string{
+func GetDivisionNameByID(db *sql.DB, divisionNumbers []string) []string {
 	var divisionsNames []string
 
 	for _, divisionNumber := range divisionNumbers {
@@ -304,7 +304,7 @@ func GetDivisionNameByID(db *sql.DB, divisionNumbers []string) []string{
 	return divisionsNames
 }
 
-func GetInventoryByYears(db *sql.DB, years int, divisionID string, inventoryName string) int{
+func GetInventoryByYears(db *sql.DB, years int, divisionID string, inventoryName string) int {
 	currentYear, monthInt, dayInt := time.Now().Date()
 	year := strconv.Itoa(currentYear - years)
 	month := strconv.Itoa(int(monthInt))
@@ -320,12 +320,12 @@ func GetInventoryByYears(db *sql.DB, years int, divisionID string, inventoryName
 	dateToParse := year + "-" + month + "-" + day
 
 	date, err := time.Parse(shortForm, dateToParse)
-	if err !=nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	rows, err := db.Query("SELECT count(*) FROM movement_of_inventory INNER JOIN  inventory " +
-		"ON inventory.inventory_number = movement_of_inventory.inventory_number WHERE movement_date > $1 AND " +
+	rows, err := db.Query("SELECT count(*) FROM movement_of_inventory INNER JOIN  inventory "+
+		"ON inventory.inventory_number = movement_of_inventory.inventory_number WHERE movement_date > $1 AND "+
 		"inventory_name = $2 AND division_number = $3", date, inventoryName, divisionID)
 
 	if err != nil {

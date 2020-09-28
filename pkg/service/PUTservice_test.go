@@ -18,7 +18,7 @@ func TestService_UpdateInventory(t *testing.T) {
 
 	date, err := time.Parse(shortForm, "2001-09-18")
 
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -43,7 +43,6 @@ func TestService_UpdateEmployee(t *testing.T) {
 
 	query := "UPDATE employees SET employee_number = \\$1, first_name = \\$2, last_name = \\$3, second_name = \\$4, " +
 		"position = \\$5, age = \\$6, sex = \\$7 WHERE employee_number = \\$8"
-
 
 	employee := model.Employee{
 		EmployeeNumber: "1",
