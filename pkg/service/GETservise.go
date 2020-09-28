@@ -245,7 +245,7 @@ func GetDivisionMaxRepairsAmount(db *sql.DB) []string{
 
 func GetMaxRepairs(db *sql.DB) int64{
 	rows, err := db.Query("SELECT MAX(count) FROM (SELECT division_number, count(*) FROM division_repair " +
-		"GROUP BY division_number) AS foo;")
+		"GROUP BY division_number) AS foo")
 
 	if err != nil{
 		log.Fatal(err)
@@ -339,6 +339,5 @@ func GetInventoryByYears(db *sql.DB, years int, divisionID string, inventoryName
 			log.Fatal(err)
 		}
 	}
-
 	return inventoryAmount
 }

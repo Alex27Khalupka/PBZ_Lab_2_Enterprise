@@ -383,6 +383,110 @@ func TestService_GetEmployeesByAgeAndSex(t *testing.T){
 	assert.Equal(t, expectedEmployees, employees)
 }
 
+func TestService_EmployeeByID(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"employee_number", "first_name", "last_name", "second_name", "position", "age", "sex"}).
+		AddRow( "E1", "Alex", "Employee", "First", "leading engineer", 40, "Male")
+
+	mock.ExpectQuery("SELECT employees.employee_number, employees.first_name, employees.last_name, " +
+		"employees.second_name, employees.position, employees.age, employees.sex FROM employees " +
+		"WHERE employee_number = \\$1").
+		WithArgs("E1").
+		WillReturnRows(rows)
+
+	expectedEmployee := model.Employee{
+			EmployeeNumber: "E1",
+			FirstName: "Alex",
+			LastName: "Employee",
+			SecondName: "First",
+			Position: "leading engineer",
+			Age: 40,
+			Sex: "Male",
+	}
+
+
+	employee := GetEmployeeByID(db, "E1")
+
+	assert.Equal(t, expectedEmployee, employee)
+}
+
+
+func TestService_GetMaxRepairs(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"0"})
+
+	mock.ExpectQuery("SELECT MAX\\(count\\) FROM \\(SELECT division_number, count\\(\\*\\) " +
+		"FROM division_repair " +
+		"GROUP BY division_number\\) AS foo").
+		WillReturnRows(rows)
+
+	max := GetMaxRepairs(db)
+
+	expectedMax := int64(0)
+
+	assert.Equal(t, expectedMax, max)
+}
+
+func TestService_GetDivisionNumberWithMaxRepairsAmount(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"division_number"}).
+		AddRow( "D100").
+		AddRow( "D101")
+
+	mock.ExpectQuery("SELECT division_number FROM \\(SELECT division_number, count\\(\\*\\) FROM " +
+		"division_repair " +
+		"GROUP BY division_number\\) AS foo WHERE count = \\$1").
+		WithArgs(10).
+		WillReturnRows(rows)
+
+	numbers := GetDivisionNumberWithMaxRepairsAmount(db, 10)
+
+	expectedNumbers := []string{"D100", "D101"}
+
+	assert.Equal(t, expectedNumbers, numbers)
+}
+
+func TestService_GetDivisionNameByID(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"division_name"}).
+		AddRow( "name 1").
+		AddRow( "name 2")
+
+	mock.ExpectQuery("SELECT division_name FROM divisions WHERE division_number IN \\(\\$1\\)").
+		WithArgs("D100").
+		WillReturnRows(rows)
+
+	names := GetDivisionNameByID(db, []string{"D100"})
+
+	expectedNames := []string{"name 1", "name 2"}
+
+	assert.Equal(t, expectedNames, names)
+}
+
 func TestService_GetInventoryByYear(t *testing.T){
 	db, mock, err := sqlmock.New()
 
