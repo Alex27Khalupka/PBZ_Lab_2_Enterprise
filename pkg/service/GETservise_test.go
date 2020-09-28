@@ -5,13 +5,11 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"log"
+	"strconv"
 	"testing"
 	"time"
 )
 
-const (
-	shortForm = "2006-01-02"
-)
 
 func TestService_GetDivisions(t *testing.T){
 	// Creates sqlmock database connection and a mock to manage expectations.
@@ -383,4 +381,149 @@ func TestService_GetEmployeesByAgeAndSex(t *testing.T){
 	}
 
 	assert.Equal(t, expectedEmployees, employees)
+}
+
+func TestService_EmployeeByID(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"employee_number", "first_name", "last_name", "second_name", "position", "age", "sex"}).
+		AddRow( "E1", "Alex", "Employee", "First", "leading engineer", 40, "Male")
+
+	mock.ExpectQuery("SELECT employees.employee_number, employees.first_name, employees.last_name, " +
+		"employees.second_name, employees.position, employees.age, employees.sex FROM employees " +
+		"WHERE employee_number = \\$1").
+		WithArgs("E1").
+		WillReturnRows(rows)
+
+	expectedEmployee := model.Employee{
+			EmployeeNumber: "E1",
+			FirstName: "Alex",
+			LastName: "Employee",
+			SecondName: "First",
+			Position: "leading engineer",
+			Age: 40,
+			Sex: "Male",
+	}
+
+
+	employee := GetEmployeeByID(db, "E1")
+
+	assert.Equal(t, expectedEmployee, employee)
+}
+
+
+func TestService_GetMaxRepairs(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"0"})
+
+	mock.ExpectQuery("SELECT MAX\\(count\\) FROM \\(SELECT division_number, count\\(\\*\\) " +
+		"FROM division_repair " +
+		"GROUP BY division_number\\) AS foo").
+		WillReturnRows(rows)
+
+	max := GetMaxRepairs(db)
+
+	expectedMax := int64(0)
+
+	assert.Equal(t, expectedMax, max)
+}
+
+func TestService_GetDivisionNumberWithMaxRepairsAmount(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"division_number"}).
+		AddRow( "D100").
+		AddRow( "D101")
+
+	mock.ExpectQuery("SELECT division_number FROM \\(SELECT division_number, count\\(\\*\\) FROM " +
+		"division_repair " +
+		"GROUP BY division_number\\) AS foo WHERE count = \\$1").
+		WithArgs(10).
+		WillReturnRows(rows)
+
+	numbers := GetDivisionNumberWithMaxRepairsAmount(db, 10)
+
+	expectedNumbers := []string{"D100", "D101"}
+
+	assert.Equal(t, expectedNumbers, numbers)
+}
+
+func TestService_GetDivisionNameByID(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"division_name"}).
+		AddRow( "name 1").
+		AddRow( "name 2")
+
+	mock.ExpectQuery("SELECT division_name FROM divisions WHERE division_number IN \\(\\$1\\)").
+		WithArgs("D100").
+		WillReturnRows(rows)
+
+	names := GetDivisionNameByID(db, []string{"D100"})
+
+	expectedNames := []string{"name 1", "name 2"}
+
+	assert.Equal(t, expectedNames, names)
+}
+
+func TestService_GetInventoryByYear(t *testing.T){
+	db, mock, err := sqlmock.New()
+
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	rows := sqlmock.NewRows([]string{"0"})
+
+	years := 3
+	currentYear, monthInt, dayInt := time.Now().Date()
+	year := strconv.Itoa(currentYear - years)
+	month := strconv.Itoa(int(monthInt))
+	day := strconv.Itoa(dayInt)
+	if len(day) < 2 {
+		day = "0" + day
+	}
+
+	if len(month) < 2 {
+		month = "0" + month
+	}
+
+	dateToParse := year + "-" + month + "-" + day
+	date, err := time.Parse(shortForm, dateToParse)
+	if err !=nil{
+		log.Fatal(err)
+	}
+
+	mock.ExpectQuery("SELECT count\\(\\*\\) FROM movement_of_inventory INNER JOIN inventory ON " +
+		"inventory.inventory_number = movement_of_inventory.inventory_number WHERE movement_date \\> \\$1 " +
+		"AND inventory_name = \\$2 AND division_number = \\$3").
+		WithArgs(date, "name", "D").
+		WillReturnRows(rows)
+
+	log.Println(date.Year())
+	count := GetInventoryByYears(db, years, "D", "name")
+
+	assert.Equal(t, 0, count)
 }
