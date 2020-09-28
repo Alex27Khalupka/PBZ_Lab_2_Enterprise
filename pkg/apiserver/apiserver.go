@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/Alex27Khalupka/PBZ_Lab_2_Enterprise/pkg/model"
 	"github.com/Alex27Khalupka/PBZ_Lab_2_Enterprise/pkg/service"
 	"github.com/Alex27Khalupka/PBZ_Lab_2_Enterprise/pkg/store"
@@ -12,22 +13,22 @@ import (
 	"strings"
 )
 
-type APIServer struct{
+type APIServer struct {
 	config *Config
 	router *mux.Router
-	Store *store.Store
+	Store  *store.Store
 }
 
-func New(config *Config) *APIServer{
+func New(config *Config) *APIServer {
 	return &APIServer{
 		config: config,
 		router: mux.NewRouter(),
 	}
 }
 
-func (s *APIServer) configureStore() error{
+func (s *APIServer) configureStore() error {
 	st := store.New(s.config.Store)
-	if err := st.Open(); err != nil{
+	if err := st.Open(); err != nil {
 		return err
 	}
 	s.Store = st
@@ -35,20 +36,20 @@ func (s *APIServer) configureStore() error{
 	return nil
 }
 
-func (s *APIServer) Start() error{
+func (s *APIServer) Start() error {
 
 	log.Println("starting API server")
 
 	s.configureRouter()
 
-	if err := s.configureStore(); err!=nil{
+	if err := s.configureStore(); err != nil {
 		return err
 	}
 
 	return http.ListenAndServe(s.config.BindAddr, s.router)
 }
 
-func (s *APIServer) configureRouter(){
+func (s *APIServer) configureRouter() {
 	s.router.HandleFunc("/divisions", s.handleGetDivisions).Methods(http.MethodGet)
 	s.router.Path("/employees").Queries("division_id", "{division_id}").HandlerFunc(s.handleGetEmployeesByDivision).Methods(http.MethodGet)
 	s.router.Path("/employees").Queries("age", "{age}", "sex", "{sex}").HandlerFunc(s.handleGetEmployeesByAgeAndSex).Methods(http.MethodGet)
@@ -69,7 +70,7 @@ func (s *APIServer) configureRouter(){
 	s.router.HandleFunc("/inventory/{inventory_id}", s.handleDeleteInventory).Methods(http.MethodDelete)
 }
 
-func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request) {
 
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
@@ -90,8 +91,7 @@ func (s *APIServer) handleGetDivisions(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-
-func (s *APIServer) handleGetEmployees(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handleGetEmployees(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
@@ -111,7 +111,7 @@ func (s *APIServer) handleGetEmployees(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func (s *APIServer) handleGetInventory(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handleGetInventory(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
@@ -131,7 +131,7 @@ func (s *APIServer) handleGetInventory(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func (s *APIServer) handleGetRepairs(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handleGetRepairs(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
@@ -151,7 +151,7 @@ func (s *APIServer) handleGetRepairs(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func (s *APIServer) handleGetWaybills(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handleGetWaybills(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
@@ -171,7 +171,7 @@ func (s *APIServer) handleGetWaybills(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func (s *APIServer) handleGetMovementOfEmployees(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handleGetMovementOfEmployees(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
@@ -191,7 +191,7 @@ func (s *APIServer) handleGetMovementOfEmployees(w http.ResponseWriter, r *http.
 	}
 }
 
-func (s *APIServer) handleGetMovementOfInventory(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handleGetMovementOfInventory(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
@@ -211,19 +211,23 @@ func (s *APIServer) handleGetMovementOfInventory(w http.ResponseWriter, r *http.
 	}
 }
 
-func (s *APIServer) handleGetEmployeesByDivision(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handleGetEmployeesByDivision(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
 	}
 	paramsList, ok := r.URL.Query()["division_id"]
 	divisionID := paramsList[0]
+	if strings.Contains(divisionID, ";") {
+		http.Error(w, "param contains ';'", http.StatusBadRequest)
+		return
+	}
 
-	if !ok || len(paramsList) < 1{
+	if !ok || len(paramsList) < 1 {
 		http.Error(w, "Url Param 'division_id' is missing", http.StatusBadRequest)
 		return
 	}
-	if len(paramsList) > 1{
+	if len(paramsList) > 1 {
 		http.Error(w, "To many URL Params", http.StatusBadRequest)
 		return
 	}
@@ -244,19 +248,23 @@ func (s *APIServer) handleGetEmployeesByDivision(w http.ResponseWriter, r *http.
 	}
 }
 
-func (s *APIServer) handleGetEmployeesByAgeAndSex(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handleGetEmployeesByAgeAndSex(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
 	}
 	paramsList, ok := r.URL.Query()["age"]
 	employeeAgeString := paramsList[0]
+	if strings.Contains(employeeAgeString, ";") {
+		http.Error(w, "param contains ';'", http.StatusBadRequest)
+		return
+	}
 
-	if !ok || len(paramsList) < 1{
+	if !ok || len(paramsList) < 1 {
 		http.Error(w, "Url Param 'age' is missing for age", http.StatusBadRequest)
 		return
 	}
-	if len(paramsList) > 1{
+	if len(paramsList) > 1 {
 		http.Error(w, "To many URL Params", http.StatusBadRequest)
 		return
 	}
@@ -267,16 +275,19 @@ func (s *APIServer) handleGetEmployeesByAgeAndSex(w http.ResponseWriter, r *http
 		return
 	}
 
-
 	paramsList, ok = r.URL.Query()["sex"]
 	employeeSex := paramsList[0]
+	if strings.Contains(employeeSex, ";") {
+		http.Error(w, "param contains ';'", http.StatusBadRequest)
+		return
+	}
 
-	if !ok || len(paramsList) < 1{
+	if !ok || len(paramsList) < 1 {
 		http.Error(w, "Url Param 'sex' is missing", http.StatusBadRequest)
 		return
 	}
 
-	if len(paramsList) > 1{
+	if len(paramsList) > 1 {
 		http.Error(w, "To many URL Params for sex", http.StatusBadRequest)
 		return
 	}
@@ -295,19 +306,23 @@ func (s *APIServer) handleGetEmployeesByAgeAndSex(w http.ResponseWriter, r *http
 	}
 }
 
-func (s *APIServer) handleInventoryByYear(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handleInventoryByYear(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
 	}
 	paramsList, ok := r.URL.Query()["years"]
 	yearsStr := paramsList[0]
+	if strings.Contains(yearsStr, ";") {
+		http.Error(w, "param contains ';'", http.StatusBadRequest)
+		return
+	}
 
-	if !ok || len(paramsList) < 1{
+	if !ok || len(paramsList) < 1 {
 		http.Error(w, "Url Param 'years' is missing", http.StatusBadRequest)
 		return
 	}
-	if len(paramsList) > 1{
+	if len(paramsList) > 1 {
 		http.Error(w, "To many URL Params", http.StatusBadRequest)
 		return
 	}
@@ -318,29 +333,36 @@ func (s *APIServer) handleInventoryByYear(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-
 	paramsList, ok = r.URL.Query()["division_id"]
 	divisionID := paramsList[0]
+	if strings.Contains(divisionID, ";") {
+		http.Error(w, "param contains ';'", http.StatusBadRequest)
+		return
+	}
 
-	if !ok || len(paramsList) < 1{
+	if !ok || len(paramsList) < 1 {
 		http.Error(w, "Url Param 'division_id' is missing", http.StatusBadRequest)
 		return
 	}
 
-	if len(paramsList) > 1{
+	if len(paramsList) > 1 {
 		http.Error(w, "To many URL Params for division_id", http.StatusBadRequest)
 		return
 	}
 
 	paramsList, ok = r.URL.Query()["name"]
 	inventoryName := paramsList[0]
+	if strings.Contains(inventoryName, ";") {
+		http.Error(w, "param contains ';'", http.StatusBadRequest)
+		return
+	}
 
-	if !ok || len(paramsList) < 1{
+	if !ok || len(paramsList) < 1 {
 		http.Error(w, "Url Param 'name' is missing", http.StatusBadRequest)
 		return
 	}
 
-	if len(paramsList) > 1{
+	if len(paramsList) > 1 {
 		http.Error(w, "To many URL Params for name", http.StatusBadRequest)
 		return
 	}
@@ -360,7 +382,7 @@ func (s *APIServer) handleInventoryByYear(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func (s *APIServer) handleGetDivisionMaxRepairAmount(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handleGetDivisionMaxRepairAmount(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
@@ -381,31 +403,35 @@ func (s *APIServer) handleGetDivisionMaxRepairAmount(w http.ResponseWriter, r *h
 	}
 }
 
-func (s *APIServer) handlePostInventory(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handlePostInventory(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	divisionID := getID(r, "division_id")
+	divisionID, err := getID(r, "division_id")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	decoder := json.NewDecoder(r.Body)
 	var inventory model.Inventory
-	err := decoder.Decode(&inventory)
+	err = decoder.Decode(&inventory)
 	log.Println(inventory)
 
-	if err!=nil{
+	if err != nil {
 		http.Error(w, "Wrong request body", http.StatusBadRequest)
 		return
 	}
 
-	if inventory.InventoryNumber == "" || inventory.InventoryName == "" || inventory.InventoryModel == ""{
+	if inventory.InventoryNumber == "" || inventory.InventoryName == "" || inventory.InventoryModel == "" {
 		http.Error(w, "Some fields are empty", http.StatusBadRequest)
 		return
 	}
 
 	err = service.POSTInventory(s.Store.GetDB(), inventory, divisionID)
-	if err!=nil{
+	if err != nil {
 		log.Println(err)
 		http.Error(w, "Inventory with this id already exists", http.StatusBadRequest)
 		return
@@ -424,7 +450,7 @@ func (s *APIServer) handlePostInventory(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func (s *APIServer) handlePostRepair(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handlePostRepair(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
@@ -435,19 +461,19 @@ func (s *APIServer) handlePostRepair(w http.ResponseWriter, r *http.Request){
 	err := decoder.Decode(&repair)
 	log.Println(repair)
 
-	if err!=nil{
+	if err != nil {
 		http.Error(w, "Wrong request body", http.StatusBadRequest)
 		return
 	}
 
 	if repair.RepairID == "" || repair.InventoryNumber == "" || repair.EmployeeNumber == "" || repair.RepairType == "" ||
-		repair.RepairTime == 0 || repair.WaybillNumber == "" || repair.ServiceStartDay.IsZero(){
+		repair.RepairTime == 0 || repair.WaybillNumber == "" || repair.ServiceStartDay.IsZero() {
 		http.Error(w, "Some fields are empty", http.StatusBadRequest)
 		return
 	}
 
 	err = service.POSTRepair(s.Store.GetDB(), repair)
-	if err!=nil{
+	if err != nil {
 		log.Println(err)
 		http.Error(w, "Repair with this id already exists", http.StatusBadRequest)
 		return
@@ -466,7 +492,7 @@ func (s *APIServer) handlePostRepair(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func (s *APIServer) handlePostWaybill(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handlePostWaybill(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
@@ -476,19 +502,19 @@ func (s *APIServer) handlePostWaybill(w http.ResponseWriter, r *http.Request){
 	var waybill model.Waybill
 	err := decoder.Decode(&waybill)
 
-	if err!=nil{
+	if err != nil {
 		log.Println(err)
 		http.Error(w, "Wrong request body", http.StatusBadRequest)
 		return
 	}
 
-	if waybill.WaybillNumber == "" || waybill.ReceivingDate.IsZero() || waybill.Price == 0 || waybill.DetailName == ""{
+	if waybill.WaybillNumber == "" || waybill.ReceivingDate.IsZero() || waybill.Price == 0 || waybill.DetailName == "" {
 		http.Error(w, "Some fields are empty", http.StatusBadRequest)
 		return
 	}
 
 	err = service.POSTWaybill(s.Store.GetDB(), waybill)
-	if err!=nil{
+	if err != nil {
 		log.Println(err)
 		http.Error(w, "Repair with this id already exists", http.StatusBadRequest)
 		return
@@ -507,33 +533,33 @@ func (s *APIServer) handlePostWaybill(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func (s *APIServer) handlePostEmployees(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handlePostEmployees(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	divisionID := getID(r, "division_id")
+	divisionID, err := getID(r, "division_id")
 
 	decoder := json.NewDecoder(r.Body)
 	var employee model.Employee
-	err := decoder.Decode(&employee)
+	err = decoder.Decode(&employee)
 
-	if err!=nil{
+	if err != nil {
 		http.Error(w, "Wrong request body", http.StatusBadRequest)
 		return
 	}
 
 	if employee.EmployeeNumber == "" || employee.FirstName == "" || employee.LastName == "" ||
-		employee.SecondName == "" || employee.Position == "" || employee.Age == 0 || employee.Sex == ""{
+		employee.SecondName == "" || employee.Position == "" || employee.Age == 0 || employee.Sex == "" {
 		http.Error(w, "Some fields are empty", http.StatusBadRequest)
 		return
 	}
 
 	err = service.POSTEmployee(s.Store.GetDB(), employee, divisionID)
-	if err!=nil{
+	if err != nil {
 		log.Println(err)
-		http.Error(w, "Employee with this id already exists", http.StatusBadRequest)
+		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
@@ -550,26 +576,30 @@ func (s *APIServer) handlePostEmployees(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func (s *APIServer) handlePutInventory(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handlePutInventory(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	inventoryID := getID(r, "inventory_id")
+	inventoryID, err := getID(r, "inventory_id")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	decoder := json.NewDecoder(r.Body)
 	var inventory model.Inventory
-	err := decoder.Decode(&inventory)
+	err = decoder.Decode(&inventory)
 	log.Println(inventory)
 
-	if err!=nil{
+	if err != nil {
 		http.Error(w, "Wrong request body", http.StatusBadRequest)
 		return
 	}
 
 	updatedInventory, err := service.PUTInventory(s.Store.GetDB(), inventory, inventoryID)
-	if err!=nil{
+	if err != nil {
 		log.Println(err)
 		http.Error(w, "Some field have wrong format, or id already exists", http.StatusBadRequest)
 		return
@@ -588,25 +618,29 @@ func (s *APIServer) handlePutInventory(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func (s *APIServer) handlePutEmployee(w http.ResponseWriter, r *http.Request){
+func (s *APIServer) handlePutEmployee(w http.ResponseWriter, r *http.Request) {
 	if err := s.Store.Open(); err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	employeeID := getID(r, "employee_id")
+	employeeID, err := getID(r, "employee_id")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	decoder := json.NewDecoder(r.Body)
 	var employee model.Employee
-	err := decoder.Decode(&employee)
+	err = decoder.Decode(&employee)
 
-	if err!=nil{
+	if err != nil {
 		http.Error(w, "Wrong request body", http.StatusBadRequest)
 		return
 	}
 
 	updatedEmployee, err := service.PUTEmployee(s.Store.GetDB(), employee, employeeID)
-	if err!=nil{
+	if err != nil {
 		log.Println(err)
 		http.Error(w, "Some field have wrong format, or id already exists", http.StatusBadRequest)
 		return
@@ -630,7 +664,12 @@ func (s *APIServer) handleDeleteEmployee(w http.ResponseWriter, req *http.Reques
 		log.Fatal(err)
 	}
 
-	employeeID := getID(req, "employee_id")
+	employeeID, err := getID(req, "employee_id")
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	if err := service.DeleteEmployee(s.Store.GetDB(), employeeID); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -646,7 +685,11 @@ func (s *APIServer) handleDeleteInventory(w http.ResponseWriter, req *http.Reque
 		log.Fatal(err)
 	}
 
-	inventoryID := getID(req, "inventory_id")
+	inventoryID, err := getID(req, "inventory_id")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	if err := service.DeleteInventory(s.Store.GetDB(), inventoryID); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -657,11 +700,12 @@ func (s *APIServer) handleDeleteInventory(w http.ResponseWriter, req *http.Reque
 
 }
 
-
-
 // func getID returns id of an object from url
-func getID(req *http.Request, idName string) string {
+func getID(req *http.Request, idName string) (string, error) {
+	if strings.Contains(idName, ";") {
+		return "", errors.New("param contains ';'")
+	}
 	vars := mux.Vars(req)
 	id := vars[idName]
-	return id
+	return id, nil
 }
