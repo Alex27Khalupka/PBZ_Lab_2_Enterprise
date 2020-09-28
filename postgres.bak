@@ -1,0 +1,420 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 12.3 (Ubuntu 12.3-1.pgdg18.04+1)
+-- Dumped by pg_dump version 12.3 (Ubuntu 12.3-1.pgdg18.04+1)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: division_repair; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.division_repair (
+    division_number character varying(16),
+    repair_id character varying(16)
+);
+
+
+ALTER TABLE public.division_repair OWNER TO postgres;
+
+--
+-- Name: divisions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.divisions (
+    division_number character varying(16) NOT NULL,
+    division_name character varying(255)
+);
+
+
+ALTER TABLE public.divisions OWNER TO postgres;
+
+--
+-- Name: employees; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.employees (
+    employee_number character varying(16) NOT NULL,
+    first_name character varying(255) NOT NULL,
+    last_name character varying(255) NOT NULL,
+    second_name character varying(255) NOT NULL,
+    "position" character varying(255) NOT NULL,
+    age integer NOT NULL,
+    sex character varying(10) NOT NULL
+);
+
+
+ALTER TABLE public.employees OWNER TO postgres;
+
+--
+-- Name: inventory; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.inventory (
+    inventory_number character varying(16) NOT NULL,
+    inventory_name character varying(255) NOT NULL,
+    inventory_model character varying(255) NOT NULL,
+    year_of_issue date NOT NULL
+);
+
+
+ALTER TABLE public.inventory OWNER TO postgres;
+
+--
+-- Name: movement_of_employees; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.movement_of_employees (
+    employee_number character varying(16),
+    movement_date date NOT NULL,
+    division_number character varying(255)
+);
+
+
+ALTER TABLE public.movement_of_employees OWNER TO postgres;
+
+--
+-- Name: movement_of_inventory; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.movement_of_inventory (
+    inventory_number character varying(16),
+    movement_date date NOT NULL,
+    division_number character varying(16)
+);
+
+
+ALTER TABLE public.movement_of_inventory OWNER TO postgres;
+
+--
+-- Name: repairs; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.repairs (
+    repair_id character varying(16) NOT NULL,
+    inventory_number character varying(16),
+    service_start_date date NOT NULL,
+    repair_type character varying(255) NOT NULL,
+    days_to_repair interval NOT NULL,
+    employee_number character varying(16),
+    waybill_number character varying(16)
+);
+
+
+ALTER TABLE public.repairs OWNER TO postgres;
+
+--
+-- Name: waybills; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.waybills (
+    waybill_number character varying(255) NOT NULL,
+    receiving_date date NOT NULL,
+    price integer NOT NULL,
+    detail_name character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.waybills OWNER TO postgres;
+
+--
+-- Data for Name: division_repair; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.division_repair (division_number, repair_id) FROM stdin;
+D3	R2
+D1	R1
+D5	R5
+D1	R3
+D5	R4
+D5	R6
+D5	R7
+D1	R8
+D5	R9
+D5	R10
+D5	R11
+\.
+
+
+--
+-- Data for Name: divisions; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.divisions (division_number, division_name) FROM stdin;
+D1	Division 1
+D2	Division 2
+D3	Division 3
+D4	Division 4
+D5	Division 5
+\.
+
+
+--
+-- Data for Name: employees; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.employees (employee_number, first_name, last_name, second_name, "position", age, sex) FROM stdin;
+E44	Lewis	Hamilton	Mersedes	leading engineer	40	Male
+E77	Valteri	Bottas	Mersedes	leading engineer	41	Male
+E5	Sebastian	Vettel	Ferrari	engineer	35	Male
+E16	Charles	Leclerc	Ferrari	engineer	24	Male
+E33	Max	Verstappen	RedBull	engineer	21	Male
+E26	Daniil	Kvyat	AphaTauri	torpedo	34	Male
+E4	Lando	Norris	Mclaren	student	19	Male
+E55	Carlos	Sainz	Mclaren	engineer	27	Male
+E31	Esteban	Ocon	Renault	worker	26	Male
+E9	Sergio	Perez	Racing Point	programmer	35	Male
+E18	Lance	Stroll	Racing Point	ex owner	25	Male
+E3	Daniel	Ricciardo	Renault	avocado	30	Male
+E7	Kimi	Raikonnen	Alfa Romeo	fantom president	99	Male
+E20	Kevin	Magnussen	Haas	programmer	27	Male
+E8	Romain	Grosjean	Haas	crasher	26	Male
+E19	Nicholas	Latifi	Williams	rent	29	Male
+E63	George	Russel	Williams	engineer	20	Male
+E10	Pierre	Gasly	AlphaTauri	assistent	22	Male
+E23	Alex	Albon	RedBull	student	20	Male
+E99	Antonio	Giovinazzi	Alfa Romeo	assistent	23	Male
+E100	Alex	Torpedo	Cheburek	postion	48	Male
+\.
+
+
+--
+-- Data for Name: inventory; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.inventory (inventory_number, inventory_name, inventory_model, year_of_issue) FROM stdin;
+I2	Machine 2	M222	2001-05-02
+I3	Calculating Machine 1	M121	2011-11-02
+I4	Calculating Machine 2	M122	2015-01-02
+I5	Calculating Machine 3	M123	2020-03-10
+I6	Org Machine	M211	2003-04-05
+I102	updated name	M111	2001-01-02
+I1	new updated name	M111	2001-01-02
+I7	Calculation machine 4	awesome model	2000-01-01
+I8	ORG machine 2	cool model	2000-01-01
+I9	Calculation machine 5	too bad model	2000-01-01
+I10	Calculation machine 6	typical model	2000-01-01
+I11	Calculation machine 7	typical model	2000-01-01
+\.
+
+
+--
+-- Data for Name: movement_of_employees; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.movement_of_employees (employee_number, movement_date, division_number) FROM stdin;
+E44	2020-09-10	D1
+E26	2020-01-10	D2
+E77	2020-01-02	D1
+E5	2020-01-02	D3
+E16	2020-01-02	D3
+E16	2020-01-03	D3
+E33	2020-01-04	D2
+E26	2020-01-02	D4
+E23	2020-01-02	D2
+E3	2020-01-02	D4
+E31	2020-01-02	D4
+E4	2020-01-02	D5
+E55	2020-01-02	D5
+E63	2020-01-02	D1
+E19	2020-01-02	D1
+E18	2020-01-02	D1
+E9	2020-01-02	D1
+E99	2020-01-02	D2
+E7	2020-01-02	D2
+E20	2020-01-02	D2
+E8	2020-01-02	D2
+E10	2020-01-02	D2
+E26	2020-02-01	D3
+\.
+
+
+--
+-- Data for Name: movement_of_inventory; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.movement_of_inventory (inventory_number, movement_date, division_number) FROM stdin;
+I1	2020-01-01	D1
+I2	2020-01-01	D2
+I2	2020-02-01	D3
+I3	2020-02-01	D2
+I4	2020-02-01	D4
+I5	2020-02-01	D5
+I6	2020-02-01	D5
+I11	2020-09-27	D5
+I7	2020-03-01	D1
+I8	2020-03-01	D1
+I9	2020-03-01	D1
+I10	2020-03-01	D5
+\.
+
+
+--
+-- Data for Name: repairs; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.repairs (repair_id, inventory_number, service_start_date, repair_type, days_to_repair, employee_number, waybill_number) FROM stdin;
+R2	I2	2020-09-18	major fix	20 days	E77	W2
+R11	I6	2020-08-26	major fix	40 days	E16	W11
+R1	I1	2020-09-17	minor fix	1 day	E44	W1
+R3	I1	2020-05-05	major fix	30 days	E5	W3
+R4	I10	2020-05-06	major fix	50 days	E5	W4
+R5	I10	2020-05-06	major fix	50 days	E16	W5
+R6	I10	2020-07-06	minor fix	10 days	E44	W6
+R7	I10	2020-07-26	majorr fix	20 days	E77	W7
+R8	I9	2020-08-26	major fix	40 days	E77	W8
+R9	I5	2020-08-26	major fix	40 days	E77	W10
+R10	I5	2020-08-26	major fix	40 days	E16	W9
+\.
+
+
+--
+-- Data for Name: waybills; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.waybills (waybill_number, receiving_date, price, detail_name) FROM stdin;
+W1	2020-09-19	1000	detail 1
+W2	2020-09-18	500	detail 2
+W3	2020-05-05	300	detail 3
+W4	2020-05-06	400	detail 4
+W5	2020-05-06	500	detail 5
+W6	2020-05-07	600	detail 6
+W7	2020-05-08	800	detail 7
+W8	2020-05-09	800	detail 9
+W9	2020-05-19	900	detail 8
+W10	2020-05-29	1000	detail 10
+W11	2020-09-09	555	detail 11
+\.
+
+
+--
+-- Name: divisions divisions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.divisions
+    ADD CONSTRAINT divisions_pkey PRIMARY KEY (division_number);
+
+
+--
+-- Name: employees employees_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.employees
+    ADD CONSTRAINT employees_pkey PRIMARY KEY (employee_number);
+
+
+--
+-- Name: inventory inventory_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.inventory
+    ADD CONSTRAINT inventory_pkey PRIMARY KEY (inventory_number);
+
+
+--
+-- Name: repairs repairs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.repairs
+    ADD CONSTRAINT repairs_pkey PRIMARY KEY (repair_id);
+
+
+--
+-- Name: waybills waybills_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.waybills
+    ADD CONSTRAINT waybills_pkey PRIMARY KEY (waybill_number);
+
+
+--
+-- Name: division_repair division_repair_division_number_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.division_repair
+    ADD CONSTRAINT division_repair_division_number_fkey FOREIGN KEY (division_number) REFERENCES public.divisions(division_number);
+
+
+--
+-- Name: division_repair division_repair_repair_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.division_repair
+    ADD CONSTRAINT division_repair_repair_id_fkey FOREIGN KEY (repair_id) REFERENCES public.repairs(repair_id);
+
+
+--
+-- Name: movement_of_employees documents_division_number_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.movement_of_employees
+    ADD CONSTRAINT documents_division_number_fkey FOREIGN KEY (division_number) REFERENCES public.divisions(division_number);
+
+
+--
+-- Name: movement_of_employees documents_employee_number_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.movement_of_employees
+    ADD CONSTRAINT documents_employee_number_fkey FOREIGN KEY (employee_number) REFERENCES public.employees(employee_number);
+
+
+--
+-- Name: movement_of_inventory movement_of_inventory_by_divisions_division_number_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.movement_of_inventory
+    ADD CONSTRAINT movement_of_inventory_by_divisions_division_number_fkey FOREIGN KEY (division_number) REFERENCES public.divisions(division_number);
+
+
+--
+-- Name: movement_of_inventory movement_of_inventory_by_divisions_inventory_number_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.movement_of_inventory
+    ADD CONSTRAINT movement_of_inventory_by_divisions_inventory_number_fkey FOREIGN KEY (inventory_number) REFERENCES public.inventory(inventory_number);
+
+
+--
+-- Name: repairs repairs_employee_number_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.repairs
+    ADD CONSTRAINT repairs_employee_number_fkey FOREIGN KEY (employee_number) REFERENCES public.employees(employee_number);
+
+
+--
+-- Name: repairs repairs_inventory_number_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.repairs
+    ADD CONSTRAINT repairs_inventory_number_fkey FOREIGN KEY (inventory_number) REFERENCES public.inventory(inventory_number);
+
+
+--
+-- Name: repairs repairs_waybill_number_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.repairs
+    ADD CONSTRAINT repairs_waybill_number_fkey FOREIGN KEY (waybill_number) REFERENCES public.waybills(waybill_number);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
